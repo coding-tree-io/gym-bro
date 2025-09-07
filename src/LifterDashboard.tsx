@@ -112,10 +112,10 @@ function DashboardTab({ quota, bookings }: { quota: any; bookings: any }) {
                 <div>
                   <div className="font-medium">
                     {new Date(booking.slot.startsAtUtc).toLocaleDateString()} at{' '}
-                    {new Date(booking.slot.startsAtUtc).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
+                    {new Date(booking.slot.startsAtUtc).toLocaleTimeString(undefined, {
+                      hour: '2-digit',
                       minute: '2-digit',
-                      hour12: true,
+                      hour12: false,
                     })}
                   </div>
                 </div>
@@ -135,6 +135,17 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
   const bookSlot = useMutation(api.bookings.bookSlot);
   const currentUser = useQuery(api.users.getCurrentUser);
 
+  // Preload previous and next day slots
+  const selectedDateTime = new Date(selectedDate).getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const prevDayStart = selectedDateTime - dayMs;
+  const prevDayEnd = selectedDateTime;
+  const nextDayStart = selectedDateTime + dayMs;
+  const nextDayEnd = selectedDateTime + 2 * dayMs;
+
+  const prevSlots = useQuery(api.slots.getSlots, { from: prevDayStart, to: prevDayEnd });
+  const nextSlots = useQuery(api.slots.getSlots, { from: nextDayStart, to: nextDayEnd });
+
   const handleBookSlot = async (slotId: Id<"slots">) => {
     try {
       await bookSlot({ slotId });
@@ -144,13 +155,93 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
     }
   };
 
+  // Swipe handling
+  let touchStartX = 0;
+  let touchEndX = 0;
+  const swipeThreshold = 50; // pixels
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndX = e.touches[0].clientX;
+  };
+  const onTouchEnd = () => {
+    const delta = touchEndX - touchStartX;
+    if (Math.abs(delta) > swipeThreshold) {
+      if (delta < 0) {
+        // swipe left -> next day
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() + 1);
+        setSelectedDate(d.toISOString().split('T')[0]);
+      } else {
+        // swipe right -> previous day
+        const d = new Date(selectedDate);
+        d.setDate(d.getDate() - 1);
+        setSelectedDate(d.toISOString().split('T')[0]);
+      }
+    }
+  };
+
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: 'numeric',
+    return new Date(timestamp).toLocaleTimeString(undefined, {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
+      hour12: false,
     });
   };
+
+  const renderSlotList = (list: any[], dateStr: string) => {
+    const isToday = new Date(dateStr).toDateString() === new Date().toDateString();
+    const now = Date.now();
+    const filtered = (list || []).filter((slot: any) => !isToday || slot.startsAtUtc > now);
+
+    if (!filtered || filtered.length === 0) {
+      return <p className="text-gray-500 text-center py-4">No sessions</p>;
+    }
+
+    return (
+      <div className="grid gap-3">
+        {filtered.map((slot: any) => {
+          const userLevel = currentUser?.experienceLevel;
+          const availableForUser = userLevel === "experienced" ? slot.availableExp : slot.availableInexp;
+          const canBook = slot.status === "open" && availableForUser > 0;
+
+          return (
+            <div key={slot._id} className="border rounded-lg p-3 bg-white">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-medium">
+                    {formatTime(slot.startsAtUtc)} - {formatTime(slot.endsAtUtc)}
+                  </div>
+                  <div className="mt-2 flex flex-col space-y-1 text-xs">
+                    <span className={`${slot.availableExp > 0 ? 'text-green-700' : 'text-red-700'}`}>Exp: {slot.availableExp}/{slot.capacityExp}</span>
+                    <span className={`${slot.availableInexp > 0 ? 'text-green-700' : 'text-red-700'}`}>Inexp: {slot.availableInexp}/{slot.capacityInexp}</span>
+                    <span className="text-blue-700">Total: {(slot.availableExp + slot.availableInexp)}/{slot.capacityTotal}</span>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <button
+                    onClick={() => void handleBookSlot(slot._id)}
+                    disabled={!canBook}
+                    className={`px-3 py-1 rounded text-sm font-medium ${
+                      canBook ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {canBook ? 'Book' : 'Full'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Dates for panels
+  const prevDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })();
+  const nextDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
 
   return (
     <div className="space-y-6">
@@ -165,66 +256,49 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
           />
         </div>
 
-        {!slots || slots.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No sessions available for this date.</p>
-        ) : (
-          <div className="grid gap-4">
-            {slots.map((slot: any) => {
-              const userLevel = currentUser?.experienceLevel;
-              const availableForUser = userLevel === "experienced" ? slot.availableExp : slot.availableInexp;
-              const canBook = slot.status === "open" && availableForUser > 0;
-
-              return (
-                <div key={slot._id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <div className="font-medium text-lg">
-                            {formatTime(slot.startsAtUtc)} - {formatTime(slot.endsAtUtc)}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 flex items-center space-x-6">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Experienced:</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            slot.availableExp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {slot.availableExp} / {slot.capacityExp}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-600">Inexperienced:</span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            slot.availableInexp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {slot.availableInexp} / {slot.capacityInexp}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="ml-4">
-                      <button
-                        onClick={() => handleBookSlot(slot._id)}
-                        disabled={!canBook}
-                        className={`px-4 py-2 rounded font-medium ${
-                          canBook
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                      >
-                        {canBook ? 'Book' : 'Full'}
-                      </button>
-                    </div>
-                  </div>
+        <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+          <div className="flex items-start gap-4">
+            <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(prevDateStr)}>
+              <div className="bg-white border rounded-lg shadow-sm">
+                <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+                  {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
                 </div>
-              );
-            })}
+                <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                  {new Date(prevDateStr).toLocaleDateString()}
+                </div>
+                <div className="p-3 border-t">
+                  {renderSlotList(prevSlots || [], prevDateStr)}
+                </div>
+              </div>
+            </div>
+            <div className="basis-1/3">
+              <div className="bg-white border rounded-lg shadow-sm">
+                <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
+                  {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
+                </div>
+                <div className="px-3 py-2 text-sm text-gray-700 text-center">
+                  {new Date(selectedDate).toLocaleDateString()}
+                </div>
+                <div className="p-3 border-t">
+                  {renderSlotList(slots || [], selectedDate)}
+                </div>
+              </div>
+            </div>
+            <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(nextDateStr)}>
+              <div className="bg-white border rounded-lg shadow-sm">
+                <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+                  {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
+                </div>
+                <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                  {new Date(nextDateStr).toLocaleDateString()}
+                </div>
+                <div className="p-3 border-t">
+                  {renderSlotList(nextSlots || [], nextDateStr)}
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -232,6 +306,9 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
 
 function BookingsTab({ bookings }: { bookings: any }) {
   const cancelBooking = useMutation(api.bookings.cancelBooking);
+  // Fetch cancellation cutoff policy to compute UI availability
+  const cutoffPolicy = useQuery(api.policies.getPolicy, { key: "cancellationCutoffHours" });
+  const cutoffHours = cutoffPolicy ? parseInt(cutoffPolicy.value) || 24 : 24;
 
   const handleCancelBooking = async (bookingId: Id<"bookings">) => {
     if (!confirm("Are you sure you want to cancel this booking?")) {
@@ -247,13 +324,13 @@ function BookingsTab({ bookings }: { bookings: any }) {
   };
 
   const formatDateTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString('en-US', {
+    return new Date(timestamp).toLocaleString(undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
+      hour12: false,
     });
   };
 
@@ -306,14 +383,31 @@ function BookingsTab({ bookings }: { bookings: any }) {
                     </div>
                   </div>
 
-                  {canCancel && (
-                    <button
-                      onClick={() => handleCancelBooking(booking._id)}
-                      className="ml-4 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
-                    >
-                      Cancel
-                    </button>
-                  )}
+                  {canCancel && (() => {
+                    const msUntilStart = booking.slot.startsAtUtc - Date.now();
+                    const hoursUntilStart = msUntilStart / (1000 * 60 * 60);
+                    const isUnderCutoff = hoursUntilStart < cutoffHours;
+
+                    return (
+                      <div className="ml-4 flex flex-col items-end">
+                        <button
+                          onClick={() => void handleCancelBooking(booking._id)}
+                          disabled={isUnderCutoff}
+                          title={isUnderCutoff ? `Cancellation unavailable within ${cutoffHours} hours of start` : 'Cancel booking'}
+                          className={`px-3 py-1 text-sm rounded ${
+                            isUnderCutoff ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                          }`}
+                        >
+                          {isUnderCutoff ? 'Unavailable' : 'Cancel'}
+                        </button>
+                        {isUnderCutoff && (
+                          <span className="mt-1 text-xs text-gray-500">
+                            Unavailable within {cutoffHours}h of start
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );

@@ -126,6 +126,11 @@ function SlotsTab() {
     to: nextDay,
   });
 
+  // Preload prev/next day slots for swipe preview
+  const dayMs = 24 * 60 * 60 * 1000;
+  const prevSlots = useQuery(api.slots.getSlots, { from: selectedDateTime - dayMs, to: selectedDateTime });
+  const nextSlots = useQuery(api.slots.getSlots, { from: nextDay, to: nextDay + dayMs });
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -154,15 +159,81 @@ function SlotsTab() {
           />
         )}
 
-        {!slots || slots.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No slots found for this date.</p>
-        ) : (
-          <div className="space-y-4">
-            {slots.map((slot: any) => (
-              <SlotCard key={slot._id} slot={slot} />
-            ))}
-          </div>
-        )}
+        {(() => {
+          let touchStartX = 0;
+          let touchEndX = 0;
+          const swipeThreshold = 50;
+          const onTouchStart = (e: React.TouchEvent) => { touchStartX = e.touches[0].clientX; };
+          const onTouchMove = (e: React.TouchEvent) => { touchEndX = e.touches[0].clientX; };
+          const onTouchEnd = () => {
+            const delta = touchEndX - touchStartX;
+            if (Math.abs(delta) > swipeThreshold) {
+              const d = new Date(selectedDate);
+              d.setDate(d.getDate() + (delta < 0 ? 1 : -1));
+              setSelectedDate(d.toISOString().split('T')[0]);
+            }
+          };
+
+          const prevDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })();
+          const nextDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
+
+          const renderAdminSlotList = (list: any[]) => {
+            if (!list || list.length === 0) return <p className="text-gray-500 text-center py-4">No slots</p>;
+            return (
+              <div className="space-y-3">
+                {list.map((slot: any) => (
+                  <SlotCard key={slot._id} slot={slot} />
+                ))}
+              </div>
+            );
+          };
+
+          return (
+            <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+              <div className="flex items-start gap-4">
+                <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(prevDateStr)}>
+                  <div className="bg-white border rounded-lg shadow-sm">
+                    <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+                      {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
+                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                      {new Date(prevDateStr).toLocaleDateString()}
+                    </div>
+                    <div className="p-3 border-t">
+                      {renderAdminSlotList(prevSlots || [])}
+                    </div>
+                  </div>
+                </div>
+                <div className="basis-1/3">
+                  <div className="bg-white border rounded-lg shadow-sm">
+                    <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
+                      {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
+                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-700 text-center">
+                      {new Date(selectedDate).toLocaleDateString()}
+                    </div>
+                    <div className="p-3 border-t">
+                      {renderAdminSlotList(slots || [])}
+                    </div>
+                  </div>
+                </div>
+                <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(nextDateStr)}>
+                  <div className="bg-white border rounded-lg shadow-sm">
+                    <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+                      {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
+                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                      {new Date(nextDateStr).toLocaleDateString()}
+                    </div>
+                    <div className="p-3 border-t">
+                      {renderAdminSlotList(nextSlots || [])}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -204,7 +275,7 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
   return (
     <div className="mb-6 p-4 border rounded-lg bg-gray-50">
       <h3 className="text-lg font-medium mb-4">Create New Slot</h3>
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+      <form onSubmit={(e) => { void handleSubmit(e); }} className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
           <input
@@ -281,7 +352,6 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
 function SlotCard({ slot }: { slot: any }) {
   const updateSlot = useMutation(api.slots.updateSlot);
   const deleteSlot = useMutation(api.slots.deleteSlot);
-  const [isEditing, setIsEditing] = useState(false);
 
   const handleStatusChange = async (status: "open" | "closed" | "canceled") => {
     try {
@@ -306,10 +376,10 @@ function SlotCard({ slot }: { slot: any }) {
   };
 
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: 'numeric',
+    return new Date(timestamp).toLocaleTimeString(undefined, {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true,
+      hour12: false,
     });
   };
 
@@ -341,7 +411,7 @@ function SlotCard({ slot }: { slot: any }) {
             </span>
           </div>
           
-          <div className="mt-3 flex items-center space-x-6">
+          <div className="mt-3 flex flex-col space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Experienced:</span>
               <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -370,7 +440,7 @@ function SlotCard({ slot }: { slot: any }) {
         <div className="ml-4 flex items-center space-x-2">
           <select
             value={slot.status}
-            onChange={(e) => handleStatusChange(e.target.value as any)}
+            onChange={(e) => void handleStatusChange(e.target.value as any)}
             className="px-3 py-1 text-sm border border-gray-300 rounded"
           >
             <option value="open">Open</option>
@@ -378,7 +448,7 @@ function SlotCard({ slot }: { slot: any }) {
             <option value="canceled">Canceled</option>
           </select>
           <button
-            onClick={handleDelete}
+            onClick={() => void handleDelete()}
             className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
           >
             Delete
@@ -430,7 +500,7 @@ function LiftersTab() {
                   </span>
                   <select
                     value={lifter.status}
-                    onChange={(e) => handleStatusChange(lifter._id, e.target.value as any)}
+                    onChange={(e) => void handleStatusChange(lifter._id, e.target.value as any)}
                     className="px-3 py-1 text-sm border border-gray-300 rounded"
                   >
                     <option value="active">Active</option>
@@ -510,7 +580,7 @@ function PoliciesTab() {
                         className="px-2 py-1 text-sm border border-gray-300 rounded w-32"
                       />
                       <button
-                        onClick={() => handleSave(policy.key)}
+                        onClick={() => void handleSave(policy.key)}
                         className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
                       >
                         Save
