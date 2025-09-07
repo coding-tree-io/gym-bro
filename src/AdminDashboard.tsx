@@ -118,6 +118,7 @@ function SlotsTab() {
   });
   
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [slidePct, setSlidePct] = useState(0);
   
   const selectedDateTime = new Date(selectedDate).getTime();
   const nextDay = selectedDateTime + 24 * 60 * 60 * 1000;
@@ -166,11 +167,22 @@ function SlotsTab() {
           const onTouchStart = (e: React.TouchEvent) => { touchStartX = e.touches[0].clientX; };
           const onTouchMove = (e: React.TouchEvent) => { touchEndX = e.touches[0].clientX; };
           const onTouchEnd = () => {
+                      const animateTo = (dir: 'next' | 'prev') => {
+                        setSlidePct(dir === 'next' ? -20 : 20);
+                        setTimeout(() => {
+                          const d = new Date(selectedDate);
+                          d.setDate(d.getDate() + (dir === 'next' ? 1 : -1));
+                          setSelectedDate(d.toISOString().split('T')[0]);
+                          setSlidePct(0);
+                        }, 180);
+                      };
             const delta = touchEndX - touchStartX;
             if (Math.abs(delta) > swipeThreshold) {
-              const d = new Date(selectedDate);
-              d.setDate(d.getDate() + (delta < 0 ? 1 : -1));
-              setSelectedDate(d.toISOString().split('T')[0]);
+              if (delta < 0) {
+                animateTo('next');
+              } else {
+                animateTo('prev');
+              }
             }
           };
 
@@ -189,22 +201,22 @@ function SlotsTab() {
           };
 
           return (
-            <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-              <div className="flex items-start gap-4">
-                <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(prevDateStr)}>
-                  <div className="bg-white border rounded-lg shadow-sm">
-                    <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+            <div className="relative overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+              <div className="flex items-start transition-transform duration-200 ease-out" style={{ width: '140%', marginLeft: '-20%', transform: `translateX(${slidePct}%)` }}>
+                <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(20); setTimeout(() => { setSelectedDate(prevDateStr); setSlidePct(0); }, 180); }}>
+                  <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
                       {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
                     </div>
-                    <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                    <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
                       {new Date(prevDateStr).toLocaleDateString()}
                     </div>
-                    <div className="p-3 border-t">
+                    <div className="p-3 border-t hidden sm:block">
                       {renderAdminSlotList(prevSlots || [])}
                     </div>
                   </div>
                 </div>
-                <div className="basis-1/3">
+                <div className="w-[60%] shrink-0 px-4">
                   <div className="bg-white border rounded-lg shadow-sm">
                     <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
                       {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
@@ -217,15 +229,15 @@ function SlotsTab() {
                     </div>
                   </div>
                 </div>
-                <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(nextDateStr)}>
-                  <div className="bg-white border rounded-lg shadow-sm">
-                    <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+                <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(-20); setTimeout(() => { setSelectedDate(nextDateStr); setSlidePct(0); }, 180); }}>
+                  <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
                       {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
                     </div>
-                    <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                    <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
                       {new Date(nextDateStr).toLocaleDateString()}
                     </div>
-                    <div className="p-3 border-t">
+                    <div className="p-3 border-t hidden sm:block">
                       {renderAdminSlotList(nextSlots || [])}
                     </div>
                   </div>
@@ -352,6 +364,7 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
 function SlotCard({ slot }: { slot: any }) {
   const updateSlot = useMutation(api.slots.updateSlot);
   const deleteSlot = useMutation(api.slots.deleteSlot);
+  const cancelBooking = useMutation(api.bookings.cancelBooking);
 
   const handleStatusChange = async (status: "open" | "closed" | "canceled") => {
     try {
@@ -420,7 +433,34 @@ function SlotCard({ slot }: { slot: any }) {
                 {slot.bookedExp} / {slot.capacityExp}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
+            {Array.isArray(slot.expBookingsList) && slot.expBookingsList.length > 0 && (
+              <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
+                {slot.expBookingsList.map((b: any) => (
+                  <div key={b.bookingId} className="flex items-center justify-between">
+                    <span>{b.name}</span>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Cancel booking for ${b.name}?`)) {
+                          void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
+                            .then(() => toast.success(`Canceled booking for ${b.name}`))
+                            .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
+                        }
+                      }}
+                      title="Cancel booking"
+                      aria-label={`Cancel booking for ${b.name}`}
+                      className="ml-2 h-7 w-7 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                        <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center space-x-2 mt-1">
               <span className="text-sm text-gray-600">Inexperienced:</span>
               <span className={`px-2 py-1 rounded text-xs font-medium ${
                 slot.availableInexp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -428,7 +468,34 @@ function SlotCard({ slot }: { slot: any }) {
                 {slot.bookedInexp} / {slot.capacityInexp}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
+            {Array.isArray(slot.inexpBookingsList) && slot.inexpBookingsList.length > 0 && (
+              <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
+                {slot.inexpBookingsList.map((b: any) => (
+                  <div key={b.bookingId} className="flex items-center justify-between">
+                    <span>{b.name}</span>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Cancel booking for ${b.name}?`)) {
+                          void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
+                            .then(() => toast.success(`Canceled booking for ${b.name}`))
+                            .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
+                        }
+                      }}
+                      title="Cancel booking"
+                      aria-label={`Cancel booking for ${b.name}`}
+                      className="ml-2 h-7 w-7 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                        <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center space-x-2 mt-1">
               <span className="text-sm text-gray-600">Total:</span>
               <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
                 {slot.totalBooked} / {slot.capacityTotal}
@@ -437,21 +504,57 @@ function SlotCard({ slot }: { slot: any }) {
           </div>
         </div>
 
-        <div className="ml-4 flex items-center space-x-2">
-          <select
-            value={slot.status}
-            onChange={(e) => void handleStatusChange(e.target.value as any)}
-            className="px-3 py-1 text-sm border border-gray-300 rounded"
+        <div className="ml-4 flex items-center space-x-1">
+          <button
+            onClick={() => void handleStatusChange("open")}
+            title="Open slot"
+            aria-label="Open slot"
+            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-green-50 border ${slot.status === 'open' ? 'bg-green-100 text-green-700 border-green-200' : 'text-green-700 border-transparent'}`}
           >
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-            <option value="canceled">Canceled</option>
-          </select>
+            <span className="sr-only">Open</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path d="M9 12.75 11.25 15 15 9.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => void handleStatusChange("closed")}
+            title="Close slot"
+            aria-label="Close slot"
+            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-yellow-50 border ${slot.status === 'closed' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'text-yellow-700 border-transparent'}`}
+          >
+            <span className="sr-only">Close</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path d="M7 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+          </button>
+          <button
+            onClick={() => void handleStatusChange("canceled")}
+            title="Cancel slot"
+            aria-label="Cancel slot"
+            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-red-50 border ${slot.status === 'canceled' ? 'bg-red-100 text-red-700 border-red-200' : 'text-red-700 border-transparent'}`}
+          >
+            <span className="sr-only">Cancel</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+          </button>
           <button
             onClick={() => void handleDelete()}
-            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+            title="Delete slot"
+            aria-label="Delete slot"
+            className="h-8 w-8 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
           >
-            Delete
+            <span className="sr-only">Delete</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <path d="M6 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 7l1-2h4l1 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="5" y="7" width="14" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
           </button>
         </div>
       </div>

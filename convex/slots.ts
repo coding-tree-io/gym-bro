@@ -28,6 +28,18 @@ export const getSlots = query({
         const expBookings = bookings.filter(b => b.level === "experienced").length;
         const inexpBookings = bookings.filter(b => b.level === "inexperienced").length;
 
+        // Resolve lifter names for booked users
+        const lifterEntries = await Promise.all(
+          bookings.map(async (b) => {
+            const authUser = await ctx.db.get(b.lifterId);
+            return { bookingId: b._id, lifterId: b.lifterId, level: b.level, name: authUser?.name || "Unknown" };
+          })
+        );
+        const expNames = lifterEntries.filter(x => x.level === "experienced").map(x => x.name);
+        const inexpNames = lifterEntries.filter(x => x.level === "inexperienced").map(x => x.name);
+        const expBookingsList = lifterEntries.filter(x => x.level === "experienced");
+        const inexpBookingsList = lifterEntries.filter(x => x.level === "inexperienced");
+
         return {
           ...slot,
           bookedExp: expBookings,
@@ -36,6 +48,10 @@ export const getSlots = query({
           availableInexp: slot.capacityInexp - inexpBookings,
           totalBooked: expBookings + inexpBookings,
           totalAvailable: slot.capacityTotal - (expBookings + inexpBookings),
+          expBookedNames: expNames,
+          inexpBookedNames: inexpNames,
+          expBookingsList,
+          inexpBookingsList,
         };
       })
     );

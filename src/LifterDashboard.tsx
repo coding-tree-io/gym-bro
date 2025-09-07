@@ -132,6 +132,7 @@ function DashboardTab({ quota, bookings }: { quota: any; bookings: any }) {
 }
 
 function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
+  const [slidePct, setSlidePct] = useState(0);
   const bookSlot = useMutation(api.bookings.bookSlot);
   const currentUser = useQuery(api.users.getCurrentUser);
 
@@ -167,18 +168,23 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
     touchEndX = e.touches[0].clientX;
   };
   const onTouchEnd = () => {
+      const animateTo = (dir: 'next' | 'prev') => {
+        setSlidePct(dir === 'next' ? -20 : 20);
+        setTimeout(() => {
+          const d = new Date(selectedDate);
+          d.setDate(d.getDate() + (dir === 'next' ? 1 : -1));
+          setSelectedDate(d.toISOString().split('T')[0]);
+          setSlidePct(0);
+        }, 180);
+      };
     const delta = touchEndX - touchStartX;
     if (Math.abs(delta) > swipeThreshold) {
       if (delta < 0) {
         // swipe left -> next day
-        const d = new Date(selectedDate);
-        d.setDate(d.getDate() + 1);
-        setSelectedDate(d.toISOString().split('T')[0]);
+        animateTo('next');
       } else {
         // swipe right -> previous day
-        const d = new Date(selectedDate);
-        d.setDate(d.getDate() - 1);
-        setSelectedDate(d.toISOString().split('T')[0]);
+        animateTo('prev');
       }
     }
   };
@@ -256,22 +262,22 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
           />
         </div>
 
-        <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-          <div className="flex items-start gap-4">
-            <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(prevDateStr)}>
-              <div className="bg-white border rounded-lg shadow-sm">
-                <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+        <div className="relative overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+          <div className="flex items-start transition-transform duration-200 ease-out" style={{ width: '140%', marginLeft: '-20%', transform: `translateX(${slidePct}%)` }}>
+            <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(20); setTimeout(() => { setSelectedDate(prevDateStr); setSlidePct(0); }, 180); }}>
+              <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
                   {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
                 </div>
-                <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
                   {new Date(prevDateStr).toLocaleDateString()}
                 </div>
-                <div className="p-3 border-t">
+                <div className="p-3 border-t hidden sm:block">
                   {renderSlotList(prevSlots || [], prevDateStr)}
                 </div>
               </div>
             </div>
-            <div className="basis-1/3">
+            <div className="w-[60%] shrink-0 px-4">
               <div className="bg-white border rounded-lg shadow-sm">
                 <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
                   {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
@@ -284,15 +290,15 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
                 </div>
               </div>
             </div>
-            <div className="basis-1/3 opacity-60 hover:opacity-80 transition" onClick={() => setSelectedDate(nextDateStr)}>
-              <div className="bg-white border rounded-lg shadow-sm">
-                <div className="px-3 py-2 text-sm font-semibold text-gray-700 text-center rounded-t-lg">
+            <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(-20); setTimeout(() => { setSelectedDate(nextDateStr); setSlidePct(0); }, 180); }}>
+              <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
                   {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
                 </div>
-                <div className="px-3 py-2 text-sm text-gray-600 text-center">
+                <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
                   {new Date(nextDateStr).toLocaleDateString()}
                 </div>
-                <div className="p-3 border-t">
+                <div className="p-3 border-t hidden sm:block">
                   {renderSlotList(nextSlots || [], nextDateStr)}
                 </div>
               </div>
