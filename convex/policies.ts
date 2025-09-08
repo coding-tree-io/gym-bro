@@ -17,7 +17,7 @@ export const getAllPolicies = query({
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    
+
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
@@ -39,7 +39,7 @@ export const updatePolicy = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    
+
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
@@ -89,7 +89,8 @@ export const initializePolicies = mutation({
       { key: "defaultWeeklyQuotaInexperienced", value: "3" },
       { key: "maxFutureBookings", value: "10" },
       { key: "waitlistOfferTimeoutMinutes", value: "15" },
-      { key: "gymTimezone", value: "America/New_York" },
+      { key: "gymTimezone", value: "Europe/Instanbul" },
+      { key: "defaultWorkingHours", value: "09:00 - 14:00, 17:00-22:00" },
     ];
 
     for (const policy of defaults) {

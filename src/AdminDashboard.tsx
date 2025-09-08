@@ -288,7 +288,12 @@ function SlotsTab() {
         {(() => {
           const renderAdminSlotList = (list: any[]) => {
             if (!list || list.length === 0)
-              return <p className="text-gray-500 text-center py-4">No slots</p>;
+              return (
+                <div className="text-center py-4 space-y-3">
+                  <p className="text-gray-500">No slots</p>
+                  <AutoFillDayButton selectedDateTime={selectedDateTime} />
+                </div>
+              );
             return (
               <div className="space-y-3">
                 {list.map((slot: any) => (
@@ -333,6 +338,30 @@ function SlotsTab() {
         })()}
       </div>
     </div>
+  );
+}
+
+function AutoFillDayButton({ selectedDateTime }: { selectedDateTime: number }) {
+  const fillDay = useMutation(api.slots.fillDayWithDefaultWorkingHours);
+  const [loading, setLoading] = useState(false);
+
+  const handleFill = async () => {
+    setLoading(true);
+    try {
+      const res = await fillDay({ dayStartUtc: selectedDateTime });
+      const created = (res as any)?.created ?? 0;
+      toast.success(`Created ${created} slot${created === 1 ? "" : "s"} from default working hours`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to fill day");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button onClick={() => void handleFill()} disabled={loading}>
+      {loading ? "Filling..." : "Fill day with default working hours"}
+    </Button>
   );
 }
 
@@ -985,6 +1014,8 @@ function PoliciesTab() {
       waitlistOfferTimeoutMinutes:
         "Minutes a lifter has to accept a waitlist offer",
       gymTimezone: "Timezone for the gym (e.g., America/New_York)",
+      defaultWorkingHours:
+        "Default working hours per day as comma-separated ranges (e.g., 09:00 - 14:00, 17:00-22:00)",
     };
     return descriptions[key] || "";
   };
