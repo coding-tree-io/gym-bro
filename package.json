@@ -5,15 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
-    "dev:frontend": "vite --open",
+    "dev:frontend": "next dev -p 3000",
     "dev:backend": "convex dev",
-    "build": "vite build",
-    "lint": "tsc -p convex -noEmit --pretty false && tsc -p . -noEmit --pretty false && convex dev --once && vite build"
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "tsc -p convex -noEmit --pretty false && tsc -p . -noEmit --pretty false && convex dev --once && next build"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.80",
     "clsx": "^2.1.1",
     "convex": "^1.24.2",
+    "next": "^14.2.13",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sonner": "^2.0.3",

@@ -7,11 +7,15 @@ This project is connected to the Convex deployment named [`upbeat-squirrel-620`]
   
 ## Project structure
   
-The frontend code is in the `app` directory and is built with [Vite](https://vitejs.dev/).
+The frontend code is in the `app` directory and is built with [Next.js](https://nextjs.org/) (App Router).
   
 The backend code is in the `convex` directory.
   
 `npm run dev` will start the frontend and backend servers.
+
+Set NEXT_PUBLIC_CONVEX_URL in a .env.local file for the Next.js app to connect to Convex:
+
+NEXT_PUBLIC_CONVEX_URL="https://YOUR-DEPLOYMENT.convex.cloud"
 
 ## App authentication
 
