@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 // Minimal Calendar component API compatible with shadcn's basic usage
 // This implementation uses a native input[type="date"] under the hood
@@ -39,15 +40,14 @@ export const Calendar = React.forwardRef<HTMLDivElement, CalendarProps>(
 
     return (
       <div ref={ref} className={cn("inline-block", className)} {...props}>
-        <input
+        <Input
           type="date"
           value={value}
           onChange={handleChange}
           min={min as any}
           max={max as any}
           className={cn(
-            "px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            "text-sm",
           )}
         />
       </div>

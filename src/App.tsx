@@ -19,7 +19,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-brand-cream">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <h2 className="text-xl font-semibold text-brand-black">Savage Barbell</h2>
+        <img src="/logo.png" alt="Savage Barbell" className="h-12 w-auto" />
         <Authenticated>
           <SignOutButton />
         </Authenticated>
@@ -48,7 +48,7 @@ function Content() {
       <Unauthenticated>
         <div className="max-w-md mx-auto mt-16">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-brand-black mb-4">Savage Barbell</h1>
+            <img src="/logo.png" alt="Savage Barbell" className="h-24 w-auto mx-auto mb-4" />
             <p className="text-xl text-gray-600">Professional gym session booking with quota management</p>
           </div>
           <SignInForm />

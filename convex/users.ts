@@ -60,25 +60,32 @@ export const createUserProfile = mutation({
       email: args.email,
     });
 
-    // Get default quota based on experience level
+    // Determine experience level and default weekly quota for lifters
+    let experienceLevel = args.experienceLevel;
     let weeklyQuota = 0;
-    if (args.role === "lifter" && args.experienceLevel) {
-      const quotaKey = args.experienceLevel === "experienced" 
-        ? "defaultWeeklyQuotaExperienced" 
+
+    if (args.role === "lifter") {
+      // Default every new lifter to inexperienced if not provided
+      if (!experienceLevel) {
+        experienceLevel = "inexperienced";
+      }
+
+      const quotaKey = experienceLevel === "experienced"
+        ? "defaultWeeklyQuotaExperienced"
         : "defaultWeeklyQuotaInexperienced";
-      
+
       const quotaPolicy = await ctx.db
         .query("policies")
         .withIndex("by_key", (q) => q.eq("key", quotaKey))
         .unique();
-      
-      weeklyQuota = quotaPolicy ? parseInt(quotaPolicy.value) : (args.experienceLevel === "experienced" ? 4 : 3);
+
+      weeklyQuota = quotaPolicy ? parseInt(quotaPolicy.value) : (experienceLevel === "experienced" ? 4 : 3);
     }
 
     const profileId = await ctx.db.insert("userProfiles", {
       userId,
       role: args.role,
-      experienceLevel: args.experienceLevel,
+      experienceLevel,
       weeklyQuota: args.role === "lifter" ? weeklyQuota : undefined,
       status: "active",
       joinedAt: Date.now(),

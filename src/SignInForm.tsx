@@ -2,6 +2,7 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export function SignInForm() {
   const { signIn } = useAuthActions();
@@ -32,14 +33,14 @@ export function SignInForm() {
           });
         }}
       >
-        <input
+        <Input
           className="auth-input-field"
           type="email"
           name="email"
           placeholder="Email"
           required
         />
-        <input
+        <Input
           className="auth-input-field"
           type="password"
           name="password"

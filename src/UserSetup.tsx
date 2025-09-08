@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 export function UserSetup() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,6 @@ export function UserSetup() {
         name: formData.name,
         email: "user@example.com", // This would come from auth in a real app
         role: formData.role,
-        experienceLevel: formData.role === "lifter" ? formData.experienceLevel : undefined,
       });
       
       toast.success("Profile created successfully!");
@@ -39,16 +39,16 @@ export function UserSetup() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">Complete Your Profile</h2>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => { void handleSubmit(e); }} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Full Name
             </label>
-            <input
+            <Input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold"
+              className=""
               placeholder="Enter your full name"
               required
             />
@@ -68,24 +68,6 @@ export function UserSetup() {
             </select>
           </div>
 
-          {formData.role === "lifter" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Experience Level
-              </label>
-              <select
-                value={formData.experienceLevel}
-                onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold"
-              >
-                <option value="inexperienced">Inexperienced</option>
-                <option value="experienced">Experienced</option>
-              </select>
-              <p className="text-sm text-gray-500 mt-1">
-                This determines your booking capacity and weekly quota
-              </p>
-            </div>
-          )}
 
           <button
             type="submit"
