@@ -1,7 +1,7 @@
-declare module "@convex-dev/auth/providers/password" {
+declare module "@convex-dev/auth/providers/Password" {
   export const Password: any;
 }
 
-declare module "@convex-dev/auth/providers/anonymous" {
+declare module "@convex-dev/auth/providers/Anonymous" {
   export const Anonymous: any;
 }
