@@ -13,6 +13,7 @@ export default tseslint.config(
       "postcss.config.js",
       "tailwind.config.js",
       "vite.config.ts",
+      "src",
     ],
   },
   {
@@ -29,9 +30,7 @@ export default tseslint.config(
       },
       parserOptions: {
         project: [
-          "./tsconfig.node.json",
-          "./tsconfig.app.json",
-          "./convex/tsconfig.json",
+          "./tsconfig.json"
         ],
       },
     },
@@ -68,6 +67,9 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       // END: Allow implicit `any`s
+
+      // Allow unnecessary type assertions (e.g., env as string in Next providers)
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
 
       // Allow async functions without await
       // for consistency (esp. Convex `handler`s)
