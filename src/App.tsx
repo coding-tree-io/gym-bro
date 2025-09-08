@@ -17,9 +17,9 @@ export default function App() {
   }, [initializePolicies]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-brand-cream">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <h2 className="text-xl font-semibold text-blue-600">GymBook Pro</h2>
+        <h2 className="text-xl font-semibold text-brand-black">Savage Barbell</h2>
         <Authenticated>
           <SignOutButton />
         </Authenticated>
@@ -38,7 +38,7 @@ function Content() {
   if (currentUser === undefined) {
     return (
       <div className="flex justify-center items-center min-h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-gold"></div>
       </div>
     );
   }
@@ -48,7 +48,7 @@ function Content() {
       <Unauthenticated>
         <div className="max-w-md mx-auto mt-16">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">GymBook Pro</h1>
+            <h1 className="text-4xl font-bold text-brand-black mb-4">Savage Barbell</h1>
             <p className="text-xl text-gray-600">Professional gym session booking with quota management</p>
           </div>
           <SignInForm />

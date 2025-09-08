@@ -3,6 +3,7 @@ const { fontFamily } = require("tailwindcss/defaultTheme");
 module.exports = {
   mode: "jit",
   purge: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
@@ -18,17 +19,29 @@ module.exports = {
         hover: "0 2px 8px rgba(0, 0, 0, 0.12)",
       },
       colors: {
+        // Brand palette derived from logo
+        brand: {
+          black: "#0B0B0C",
+          cream: "#E9DCC8",
+          gold: "#F2C443",
+          red: "#D4493A",
+          gray: "#6F767D",
+          grayDark: "#3D4349",
+          grayLight: "#B9C1C7",
+          white: "#FFFFFF",
+        },
+        // Keep backwards-compatible semantic tokens mapped to brand palette
         primary: {
-          DEFAULT: "#4F46E5",
-          hover: "#4338CA",
+          DEFAULT: "#0B0B0C", // brand.black
+          hover: "#3D4349", // brand.grayDark
         },
         secondary: {
-          DEFAULT: "#6B7280",
-          hover: "#4B5563",
+          DEFAULT: "#E9DCC8", // brand.cream
+          hover: "#E2D3B9", // slight darker cream
         },
         accent: {
-          DEFAULT: "#8B5CF6",
-          hover: "#7C3AED",
+          DEFAULT: "#F2C443", // brand.gold
+          hover: "#DDB53B", // slightly darker gold
         },
       },
       spacing: {

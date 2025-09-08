@@ -28,6 +28,10 @@ body {
     "Segoe UI Emoji",
     "Segoe UI Symbol",
     "Noto Color Emoji";
+}
+
+/* Light fallback if dark class removed */
+html:not(.dark) body {
   color: var(--color-dark);
   background: var(--color-light);
 }

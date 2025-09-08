@@ -3,6 +3,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { toast } from "sonner";
 import { Id } from "../convex/_generated/dataModel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
 
 export function LifterDashboard() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "calendar" | "bookings">("dashboard");
@@ -27,35 +32,39 @@ export function LifterDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-brand-black">
           Welcome, {currentUser?.name}!
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-brand-gray mt-1">
           {currentUser?.experienceLevel} lifter
         </p>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <nav className="flex space-x-8 px-6">
-          {[
-            { key: "dashboard", label: "Dashboard" },
-            { key: "calendar", label: "Book Sessions" },
-            { key: "bookings", label: "My Bookings" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                activeTab === tab.key
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="bg-white rounded-lg shadow-sm border px-2">
+        <NavigationMenu className="justify-start">
+          <NavigationMenuList>
+            {[
+              { key: "dashboard", label: "Dashboard" },
+              { key: "calendar", label: "Book Sessions" },
+              { key: "bookings", label: "My Bookings" },
+            ].map((tab) => (
+              <NavigationMenuItem key={tab.key}>
+                <NavigationMenuLink
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setActiveTab(tab.key as any); }}
+                  className={`px-3 py-4 border-b-2 font-medium text-sm ${
+                    activeTab === tab.key
+                      ? "border-brand-gold text-brand-black"
+                      : "border-transparent text-brand-gray hover:text-brand-grayDark"
+                  }`}
+                >
+                  {tab.label}
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
       </div>
 
       {/* Content */}
@@ -78,13 +87,13 @@ function DashboardTab({ quota, bookings }: { quota: any; bookings: any }) {
         <h2 className="text-xl font-semibold mb-4">Weekly Quota</h2>
         <div className="flex items-center space-x-4">
           <div className="flex-1">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <div className="flex justify-between text-sm text-brand-gray mb-1">
               <span>Progress</span>
               <span>{quota?.used || 0} / {quota?.quota || 0}</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-brand-cream rounded-full h-2">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-brand-gold h-2 rounded-full transition-all duration-300"
                 style={{ 
                   width: `${quota ? Math.min((quota.used / quota.quota) * 100, 100) : 0}%` 
                 }}
@@ -95,7 +104,7 @@ function DashboardTab({ quota, bookings }: { quota: any; bookings: any }) {
             <div className="text-2xl font-bold text-gray-900">
               {quota?.remaining || 0}
             </div>
-            <div className="text-sm text-gray-500">remaining</div>
+            <div className="text-sm text-brand-gray">remaining</div>
           </div>
         </div>
       </div>
@@ -214,7 +223,7 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
           const canBook = slot.status === "open" && availableForUser > 0;
 
           return (
-            <div key={slot._id} className="border rounded-lg p-3 bg-white">
+            <Card key={slot._id} className="p-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="font-medium">
@@ -223,7 +232,7 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
                   <div className="mt-2 flex flex-col space-y-1 text-xs">
                     <span className={`${slot.availableExp > 0 ? 'text-green-700' : 'text-red-700'}`}>Exp: {slot.availableExp}/{slot.capacityExp}</span>
                     <span className={`${slot.availableInexp > 0 ? 'text-green-700' : 'text-red-700'}`}>Inexp: {slot.availableInexp}/{slot.capacityInexp}</span>
-                    <span className="text-blue-700">Total: {(slot.availableExp + slot.availableInexp)}/{slot.capacityTotal}</span>
+                    <span className="text-brand-gold">Total: {(slot.availableExp + slot.availableInexp)}/{slot.capacityTotal}</span>
                   </div>
                 </div>
                 <div className="ml-3">
@@ -231,14 +240,14 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
                     onClick={() => void handleBookSlot(slot._id)}
                     disabled={!canBook}
                     className={`px-3 py-1 rounded text-sm font-medium ${
-                      canBook ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      canBook ? 'bg-brand-black text-white hover:bg-brand-grayDark' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
                     {canBook ? 'Book' : 'Full'}
                   </button>
                 </div>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>
@@ -254,57 +263,41 @@ function CalendarTab({ selectedDate, setSelectedDate, slots }: any) {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Available Sessions</h2>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+          <Calendar
+            mode="single"
+            selected={new Date(selectedDate)}
+            onSelect={(d) => d && setSelectedDate(d.toISOString().split('T')[0])}
           />
         </div>
 
-        <div className="relative overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-          <div className="flex items-start transition-transform duration-200 ease-out" style={{ width: '140%', marginLeft: '-20%', transform: `translateX(${slidePct}%)` }}>
-            <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(20); setTimeout(() => { setSelectedDate(prevDateStr); setSlidePct(0); }, 180); }}>
-              <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
-                  {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
-                </div>
-                <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
-                  {new Date(prevDateStr).toLocaleDateString()}
-                </div>
-                <div className="p-3 border-t hidden sm:block">
-                  {renderSlotList(prevSlots || [], prevDateStr)}
-                </div>
-              </div>
-            </div>
-            <div className="w-[60%] shrink-0 px-4">
+          <Carousel
+              onPrev={() => {
+                  const d = new Date(selectedDate);
+                  d.setDate(d.getDate() - 1);
+                  setSelectedDate(d.toISOString().split('T')[0]);
+              }}
+              onNext={() => {
+                  const d = new Date(selectedDate);
+                  d.setDate(d.getDate() + 1);
+                  setSelectedDate(d.toISOString().split('T')[0]);
+              }}
+          >
+          <CarouselContent className="w-full">
+            <CarouselItem className="w-[90%] px-4 mx-auto">
               <div className="bg-white border rounded-lg shadow-sm">
-                <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
+                <div className="px-3 py-2 text-sm font-semibold text-brand-black text-center rounded-t-lg">
                   {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
                 </div>
-                <div className="px-3 py-2 text-sm text-gray-700 text-center">
+                <div className="px-3 py-2 text-sm text-brand-grayDark text-center">
                   {new Date(selectedDate).toLocaleDateString()}
                 </div>
                 <div className="p-3 border-t">
                   {renderSlotList(slots || [], selectedDate)}
                 </div>
               </div>
-            </div>
-            <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(-20); setTimeout(() => { setSelectedDate(nextDateStr); setSlidePct(0); }, 180); }}>
-              <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
-                  {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
-                </div>
-                <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
-                  {new Date(nextDateStr).toLocaleDateString()}
-                </div>
-                <div className="p-3 border-t hidden sm:block">
-                  {renderSlotList(nextSlots || [], nextDateStr)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
       </div>
     </div>
   );
@@ -379,9 +372,9 @@ function BookingsTab({ bookings }: { bookings: any }) {
                           {booking.slot ? formatDateTime(booking.slot.startsAtUtc) : 'Slot deleted'}
                         </div>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(booking.status)}`}>
+                      <Badge className={`${getStatusColor(booking.status)}`}>
                         {booking.status.replace(/_/g, ' ')}
-                      </span>
+                      </Badge>
                     </div>
                     
                     <div className="mt-2 text-sm text-gray-500">

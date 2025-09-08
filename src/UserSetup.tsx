@@ -48,7 +48,7 @@ export function UserSetup() {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold"
               placeholder="Enter your full name"
               required
             />
@@ -61,7 +61,7 @@ export function UserSetup() {
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold"
             >
               <option value="lifter">Lifter</option>
               <option value="admin">Admin</option>
@@ -76,7 +76,7 @@ export function UserSetup() {
               <select
                 value={formData.experienceLevel}
                 onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-gold"
               >
                 <option value="inexperienced">Inexperienced</option>
                 <option value="experienced">Experienced</option>
@@ -89,7 +89,7 @@ export function UserSetup() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-brand-black text-white py-2 px-4 rounded-md hover:bg-brand-grayDark focus:outline-none focus:ring-2 focus:ring-brand-gold"
           >
             Complete Setup
           </button>

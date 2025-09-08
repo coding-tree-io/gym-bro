@@ -3,6 +3,47 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { toast } from "sonner";
 import { Id } from "../convex/_generated/dataModel";
+import {Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
+
+function NavMenuAdmin({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: any) => void }) {
+  const tabs = [
+    { key: "overview", label: "Overview" },
+    { key: "slots", label: "Manage Slots" },
+    { key: "lifters", label: "Manage Lifters" },
+    { key: "policies", label: "Policies" },
+    { key: "reports", label: "Reports" },
+  ] as const;
+  return (
+    <NavigationMenu className="justify-start">
+      <NavigationMenuList>
+        {tabs.map((tab) => (
+          <NavigationMenuItem key={tab.key}>
+            <NavigationMenuLink
+              href="#"
+              onClick={(e) => { e.preventDefault(); setActiveTab(tab.key); }}
+              className={
+                "px-3 py-4 border-b-2 font-medium text-sm " +
+                (activeTab === tab.key
+                  ? "border-brand-gold text-brand-black"
+                  : "border-transparent text-brand-gray hover:text-brand-grayDark")
+              }
+            >
+              {tab.label}
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        ))}
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<"overview" | "slots" | "lifters" | "policies" | "reports">("overview");
@@ -12,34 +53,14 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-1">Manage your gym operations</p>
-      </div>
+      <Card className="p-6">
+        <h1 className="text-3xl font-bold text-brand-black">Admin Dashboard</h1>
+        <p className="text-brand-gray mt-1">Manage your gym operations</p>
+      </Card>
 
       {/* Navigation */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <nav className="flex space-x-8 px-6">
-          {[
-            { key: "overview", label: "Overview" },
-            { key: "slots", label: "Manage Slots" },
-            { key: "lifters", label: "Manage Lifters" },
-            { key: "policies", label: "Policies" },
-            { key: "reports", label: "Reports" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                activeTab === tab.key
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="bg-white rounded-lg shadow-sm border px-2">
+        <NavMenuAdmin activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
       {/* Content */}
@@ -60,23 +81,23 @@ function OverviewTab({ stats }: { stats: any }) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-2xl font-bold text-gray-900">{stats?.totalLifters || 0}</div>
+          <div className="text-2xl font-bold text-brand-black">{stats?.totalLifters || 0}</div>
           <div className="text-sm text-gray-500">Total Lifters</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-2xl font-bold text-gray-900">{stats?.activeSlots || 0}</div>
+          <div className="text-2xl font-bold text-brand-black">{stats?.activeSlots || 0}</div>
           <div className="text-sm text-gray-500">Active Slots</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-2xl font-bold text-gray-900">{stats?.totalBookings || 0}</div>
+          <div className="text-2xl font-bold text-brand-black">{stats?.totalBookings || 0}</div>
           <div className="text-sm text-gray-500">Weekly Bookings</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-2xl font-bold text-gray-900">{stats?.complianceRate || 0}%</div>
+          <div className="text-2xl font-bold text-brand-black">{stats?.complianceRate || 0}%</div>
           <div className="text-sm text-gray-500">Quota Compliance</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-2xl font-bold text-gray-900">{stats?.utilizationRate || 0}%</div>
+          <div className="text-2xl font-bold text-brand-black">{stats?.utilizationRate || 0}%</div>
           <div className="text-sm text-gray-500">Utilization Rate</div>
         </div>
       </div>
@@ -89,10 +110,10 @@ function OverviewTab({ stats }: { stats: any }) {
         ) : (
           <div className="space-y-3">
             {unbookedLifters.slice(0, 10).map((lifter: any) => (
-              <div key={lifter._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={lifter._id} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
                 <div>
                   <div className="font-medium">{lifter.name}</div>
-                  <div className="text-sm text-gray-600">{lifter.email}</div>
+                  <div className="text-sm text-brand-gray">{lifter.email}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-medium">
@@ -117,7 +138,7 @@ function SlotsTab() {
     return today.toISOString().split('T')[0];
   });
   
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
   const [slidePct, setSlidePct] = useState(0);
   
   const selectedDateTime = new Date(selectedDate).getTime();
@@ -127,38 +148,38 @@ function SlotsTab() {
     to: nextDay,
   });
 
-  // Preload prev/next day slots for swipe preview
-  const dayMs = 24 * 60 * 60 * 1000;
-  const prevSlots = useQuery(api.slots.getSlots, { from: selectedDateTime - dayMs, to: selectedDateTime });
-  const nextSlots = useQuery(api.slots.getSlots, { from: nextDay, to: nextDay + dayMs });
-
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Manage Slots</h2>
           <div className="flex items-center space-x-4">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md"
+            <Calendar
+              mode="single"
+              selected={new Date(selectedDate)}
+              onSelect={(d) => d && setSelectedDate(d.toISOString().split('T')[0])}
             />
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              Create Slot
-            </button>
+            <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+              <DialogTrigger asChild>
+                <Button>
+                  Create Slot
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Slot</DialogTitle>
+                  <DialogDescription>
+                    Choose a time range and capacities for {new Date(selectedDate).toLocaleDateString()}.
+                  </DialogDescription>
+                </DialogHeader>
+                <CreateSlotForm 
+                  selectedDate={selectedDate}
+                  onClose={() => setOpenCreate(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-
-        {showCreateForm && (
-          <CreateSlotForm 
-            selectedDate={selectedDate}
-            onClose={() => setShowCreateForm(false)} 
-          />
-        )}
 
         {(() => {
           let touchStartX = 0;
@@ -186,9 +207,6 @@ function SlotsTab() {
             }
           };
 
-          const prevDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; })();
-          const nextDateStr = (() => { const d = new Date(selectedDate); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
-
           const renderAdminSlotList = (list: any[]) => {
             if (!list || list.length === 0) return <p className="text-gray-500 text-center py-4">No slots</p>;
             return (
@@ -201,49 +219,34 @@ function SlotsTab() {
           };
 
           return (
-            <div className="relative overflow-hidden" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-              <div className="flex items-start transition-transform duration-200 ease-out" style={{ width: '140%', marginLeft: '-20%', transform: `translateX(${slidePct}%)` }}>
-                <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(20); setTimeout(() => { setSelectedDate(prevDateStr); setSlidePct(0); }, 180); }}>
-                  <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
-                      {new Date(prevDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
-                    </div>
-                    <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
-                      {new Date(prevDateStr).toLocaleDateString()}
-                    </div>
-                    <div className="p-3 border-t hidden sm:block">
-                      {renderAdminSlotList(prevSlots || [])}
-                    </div>
-                  </div>
-                </div>
-                <div className="w-[60%] shrink-0 px-4">
+              <Carousel
+                  onPrev={() => {
+                      const d = new Date(selectedDate);
+                      d.setDate(d.getDate() - 1);
+                      setSelectedDate(d.toISOString().split('T')[0]);
+                  }}
+                  onNext={() => {
+                      const d = new Date(selectedDate);
+                      d.setDate(d.getDate() + 1);
+                      setSelectedDate(d.toISOString().split('T')[0]);
+                  }}
+              >
+              <CarouselContent className="w-full">
+                <CarouselItem className="w-[90%] px-4 mx-auto">
                   <div className="bg-white border rounded-lg shadow-sm">
-                    <div className="px-3 py-2 text-sm font-semibold text-gray-900 text-center rounded-t-lg">
+                    <div className="px-3 py-2 text-sm font-semibold text-brand-black text-center rounded-t-lg">
                       {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'long' })}
                     </div>
-                    <div className="px-3 py-2 text-sm text-gray-700 text-center">
+                    <div className="px-3 py-2 text-sm text-brand-grayDark text-center">
                       {new Date(selectedDate).toLocaleDateString()}
                     </div>
                     <div className="p-3 border-t">
                       {renderAdminSlotList(slots || [])}
                     </div>
                   </div>
-                </div>
-                <div className="w-[20%] shrink-0 opacity-60 hover:opacity-80 transition cursor-pointer" onClick={() => { setSlidePct(-20); setTimeout(() => { setSelectedDate(nextDateStr); setSlidePct(0); }, 180); }}>
-                  <div className="bg-white border rounded-lg shadow-sm pointer-events-none">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-700 text-center rounded-t-lg truncate">
-                      {new Date(nextDateStr).toLocaleDateString(undefined, { weekday: 'long' })}
-                    </div>
-                    <div className="px-3 py-2 text-xs text-gray-600 text-center truncate">
-                      {new Date(nextDateStr).toLocaleDateString()}
-                    </div>
-                    <div className="p-3 border-t hidden sm:block">
-                      {renderAdminSlotList(nextSlots || [])}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                </CarouselItem>
+              </CarouselContent>
+            </Carousel>
           );
         })()}
       </div>
@@ -255,9 +258,9 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
   const [formData, setFormData] = useState({
     startTime: "09:00",
     endTime: "10:00",
-    capacityTotal: 10,
-    capacityExp: 5,
-    capacityInexp: 5,
+    capacityTotal: 4,
+    capacityExp: 3,
+    capacityInexp: 2,
   });
 
   const createSlot = useMutation(api.slots.createSlot);
@@ -285,12 +288,12 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
   };
 
   return (
-    <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+    <div className="mb-6 p-4 border rounded-lg bg-secondary">
       <h3 className="text-lg font-medium mb-4">Create New Slot</h3>
       <form onSubmit={(e) => { void handleSubmit(e); }} className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-          <input
+          <Label htmlFor="start-time">Start Time</Label>
+          <input id="start-time"
             type="time"
             value={formData.startTime}
             onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
@@ -299,8 +302,8 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-          <input
+          <Label htmlFor="end-time">End Time</Label>
+          <input id="end-time"
             type="time"
             value={formData.endTime}
             onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
@@ -309,8 +312,8 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
-          <input
+          <Label htmlFor="capacity-total">Total Capacity</Label>
+          <input id="capacity-total"
             type="number"
             value={formData.capacityTotal}
             onChange={(e) => setFormData({ ...formData, capacityTotal: parseInt(e.target.value) })}
@@ -320,8 +323,8 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Experienced Capacity</label>
-          <input
+          <Label htmlFor="capacity-exp">Experienced Capacity</Label>
+          <input id="capacity-exp"
             type="number"
             value={formData.capacityExp}
             onChange={(e) => setFormData({ ...formData, capacityExp: parseInt(e.target.value) })}
@@ -331,8 +334,8 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
           />
         </div>
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Inexperienced Capacity</label>
-          <input
+          <Label htmlFor="capacity-inexp">Inexperienced Capacity</Label>
+          <input id="capacity-inexp"
             type="number"
             value={formData.capacityInexp}
             onChange={(e) => setFormData({ ...formData, capacityInexp: parseInt(e.target.value) })}
@@ -342,19 +345,12 @@ function CreateSlotForm({ selectedDate, onClose }: { selectedDate: string; onClo
           />
         </div>
         <div className="col-span-2 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-          >
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
+          </Button>
+          <Button type="submit">
             Create Slot
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -410,155 +406,161 @@ function SlotCard({ slot }: { slot: any }) {
   };
 
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center space-x-4">
-            <div>
-              <div className="font-medium text-lg">
-                {formatTime(slot.startsAtUtc)} - {formatTime(slot.endsAtUtc)}
-              </div>
-            </div>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(slot.status)}`}>
-              {slot.status}
-            </span>
-          </div>
-          
-          <div className="mt-3 flex flex-col space-y-1">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Experienced:</span>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                slot.availableExp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {slot.bookedExp} / {slot.capacityExp}
-              </span>
-            </div>
-            {Array.isArray(slot.expBookingsList) && slot.expBookingsList.length > 0 && (
-              <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
-                {slot.expBookingsList.map((b: any) => (
-                  <div key={b.bookingId} className="flex items-center justify-between">
-                    <span>{b.name}</span>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Cancel booking for ${b.name}?`)) {
-                          void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
-                            .then(() => toast.success(`Canceled booking for ${b.name}`))
-                            .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
-                        }
-                      }}
-                      title="Cancel booking"
-                      aria-label={`Cancel booking for ${b.name}`}
-                      className="ml-2 h-7 w-7 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                        <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-sm text-gray-600">Inexperienced:</span>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                slot.availableInexp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {slot.bookedInexp} / {slot.capacityInexp}
-              </span>
-            </div>
-            {Array.isArray(slot.inexpBookingsList) && slot.inexpBookingsList.length > 0 && (
-              <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
-                {slot.inexpBookingsList.map((b: any) => (
-                  <div key={b.bookingId} className="flex items-center justify-between">
-                    <span>{b.name}</span>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Cancel booking for ${b.name}?`)) {
-                          void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
-                            .then(() => toast.success(`Canceled booking for ${b.name}`))
-                            .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
-                        }
-                      }}
-                      title="Cancel booking"
-                      aria-label={`Cancel booking for ${b.name}`}
-                      className="ml-2 h-7 w-7 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-                        <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-sm text-gray-600">Total:</span>
-              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                {slot.totalBooked} / {slot.capacityTotal}
-              </span>
-            </div>
-          </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">
+            {formatTime(slot.startsAtUtc)} - {formatTime(slot.endsAtUtc)}
+          </CardTitle>
+          <Badge className={`${getStatusColor(slot.status)}`}>
+            {slot.status}
+          </Badge>
         </div>
+      </CardHeader>
 
-        <div className="ml-4 flex items-center space-x-1">
-          <button
-            onClick={() => void handleStatusChange("open")}
-            title="Open slot"
-            aria-label="Open slot"
-            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-green-50 border ${slot.status === 'open' ? 'bg-green-100 text-green-700 border-green-200' : 'text-green-700 border-transparent'}`}
-          >
-            <span className="sr-only">Open</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-              <path d="M9 12.75 11.25 15 15 9.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => void handleStatusChange("closed")}
-            title="Close slot"
-            aria-label="Close slot"
-            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-yellow-50 border ${slot.status === 'closed' ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'text-yellow-700 border-transparent'}`}
-          >
-            <span className="sr-only">Close</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-              <path d="M7 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => void handleStatusChange("canceled")}
-            title="Cancel slot"
-            aria-label="Cancel slot"
-            className={`h-8 w-8 flex items-center justify-center rounded hover:bg-red-50 border ${slot.status === 'canceled' ? 'bg-red-100 text-red-700 border-red-200' : 'text-red-700 border-transparent'}`}
-          >
-            <span className="sr-only">Cancel</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-              <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-          </button>
-          <button
-            onClick={() => void handleDelete()}
-            title="Delete slot"
-            aria-label="Delete slot"
-            className="h-8 w-8 flex items-center justify-center rounded text-red-700 hover:bg-red-50"
-          >
-            <span className="sr-only">Delete</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-              <path d="M6 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M9 7l1-2h4l1 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              <rect x="5" y="7" width="14" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
-          </button>
+      <CardContent className="pt-0">
+        <div className="flex flex-col space-y-1">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-brand-gray">Experienced:</span>
+            <Badge className={`${slot.availableExp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {slot.bookedExp} / {slot.capacityExp}
+            </Badge>
+          </div>
+          {Array.isArray(slot.expBookingsList) && slot.expBookingsList.length > 0 && (
+            <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
+              {slot.expBookingsList.map((b: any) => (
+                <div key={b.bookingId} className="flex items-center justify-between">
+                  <Button
+                    onClick={() => {
+                      if (confirm(`Cancel booking for ${b.name}?`)) {
+                        void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
+                          .then(() => toast.success(`Canceled booking for ${b.name}`))
+                          .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
+                      }
+                    }}
+                    title="Cancel booking"
+                    aria-label={`Cancel booking for ${b.name}`}
+                    size="icon"
+                    variant="ghost"
+                    className="mr-2 text-red-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  </Button>
+                  <span>{b.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center space-x-2 mt-1">
+            <span className="text-sm text-brand-gray">Inexperienced:</span>
+            <Badge className={`${slot.availableInexp > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {slot.bookedInexp} / {slot.capacityInexp}
+            </Badge>
+          </div>
+          {Array.isArray(slot.inexpBookingsList) && slot.inexpBookingsList.length > 0 && (
+            <div className="pl-6 text-xs text-gray-700 break-words space-y-1">
+              {slot.inexpBookingsList.map((b: any) => (
+                <div key={b.bookingId} className="flex items-center justify-between">
+                  <Button
+                    onClick={() => {
+                      if (confirm(`Cancel booking for ${b.name}?`)) {
+                        void cancelBooking({ bookingId: b.bookingId as Id<"bookings"> })
+                          .then(() => toast.success(`Canceled booking for ${b.name}`))
+                          .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to cancel'));
+                      }
+                    }}
+                    title="Cancel booking"
+                    aria-label={`Cancel booking for ${b.name}`}
+                    size="icon"
+                    variant="ghost"
+                    className="mr-2 text-red-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  </Button>
+                  <span>{b.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center space-x-2 mt-1">
+            <span className="text-sm text-brand-gray">Total:</span>
+            <Badge className="bg-brand-gold/20 text-brand-black">
+              {slot.totalBooked} / {slot.capacityTotal}
+            </Badge>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+
+      <CardFooter className="justify-end space-x-1">
+        <Button
+          onClick={() => void handleStatusChange("open")}
+          title="Open slot"
+          aria-label="Open slot"
+          size="icon"
+          variant="ghost"
+          className={slot.status === 'open' ? 'bg-green-100 text-green-700 border border-green-200' : 'text-green-700'}
+        >
+          <span className="sr-only">Open</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+            <path d="M9 12.75 11.25 15 15 9.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        </Button>
+        <Button
+          onClick={() => void handleStatusChange("closed")}
+          title="Close slot"
+          aria-label="Close slot"
+          size="icon"
+          variant="ghost"
+          className={slot.status === 'closed' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'text-yellow-700'}
+        >
+          <span className="sr-only">Close</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+            <path d="M7 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        </Button>
+        <Button
+          onClick={() => void handleStatusChange("canceled")}
+          title="Cancel slot"
+          aria-label="Cancel slot"
+          size="icon"
+          variant="ghost"
+          className={slot.status === 'canceled' ? 'bg-red-100 text-red-700 border border-red-200' : 'text-red-700'}
+        >
+          <span className="sr-only">Cancel</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+            <path d="M15 9 9 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M9 9l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        </Button>
+        <Button
+          onClick={() => void handleDelete()}
+          title="Delete slot"
+          aria-label="Delete slot"
+          size="icon"
+          variant="ghost"
+          className="text-red-700"
+        >
+          <span className="sr-only">Delete</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+            <path d="M6 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M9 7l1-2h4l1 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <rect x="5" y="7" width="14" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -584,34 +586,49 @@ function LiftersTab() {
       ) : (
         <div className="space-y-4">
           {lifters.map((lifter: any) => (
-            <div key={lifter._id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="font-medium text-lg">{lifter.name}</div>
-                  <div className="text-sm text-gray-600">{lifter.email}</div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {lifter.experienceLevel} • Weekly Quota: {lifter.weeklyQuota || 0} • 
-                    Joined: {new Date(lifter.joinedAt).toLocaleDateString()}
+            <Card
+              key={lifter._id}
+              className={`${lifter.status === 'active'
+                ? 'bg-secondary border-brand-gold/40 text-brand-black'
+                : 'bg-brand-red/5 border-brand-red/40 text-brand-black'}`}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{lifter.name}</CardTitle>
+                    <CardDescription className="mt-0.5">{lifter.email}</CardDescription>
+                    <CardDescription className="mt-1">
+                      {lifter.experienceLevel} • Weekly Quota: {lifter.weeklyQuota || 0} • Joined: {new Date(lifter.joinedAt).toLocaleDateString()}
+                    </CardDescription>
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    lifter.status === "active" ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {lifter.status}
-                  </span>
-                  <select
-                    value={lifter.status}
-                    onChange={(e) => void handleStatusChange(lifter._id, e.target.value as any)}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded"
+              </CardHeader>
+              <CardFooter className="justify-end pt-0">
+                {lifter.status === 'active' ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto text-red-700 border border-red-200 hover:bg-red-50"
+                    title="Freeze lifter"
+                    aria-label={`Freeze ${lifter.name}`}
+                    onClick={() => void handleStatusChange(lifter._id, 'frozen')}
                   >
-                    <option value="active">Active</option>
-                    <option value="frozen">Frozen</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+                    Freeze
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto text-green-700 border border-green-200 hover:bg-green-50"
+                    title="Activate lifter"
+                    aria-label={`Activate ${lifter.name}`}
+                    onClick={() => void handleStatusChange(lifter._id, 'active')}
+                  >
+                    Activate
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
@@ -682,30 +699,21 @@ function PoliciesTab() {
                         onChange={(e) => setEditValue(e.target.value)}
                         className="px-2 py-1 text-sm border border-gray-300 rounded w-32"
                       />
-                      <button
-                        onClick={() => void handleSave(policy.key)}
-                        className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
-                      >
+                      <Button size="sm" variant="secondary" onClick={() => void handleSave(policy.key)}>
                         Save
-                      </button>
-                      <button
-                        onClick={() => setEditingPolicy(null)}
-                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                      >
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingPolicy(null)}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-sm font-mono">
+                      <Badge variant="secondary" className="font-mono">
                         {policy.value}
-                      </span>
-                      <button
-                        onClick={() => handleEdit(policy.key, policy.value)}
-                        className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                      >
+                      </Badge>
+                      <Button size="sm" onClick={() => handleEdit(policy.key, policy.value)}>
                         Edit
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -742,26 +750,26 @@ function ReportsTab() {
 
         {!monthlyReport ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-gold mx-auto"></div>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-secondary rounded-lg p-4">
                 <div className="text-2xl font-bold text-gray-900">{monthlyReport.totalBookings}</div>
                 <div className="text-sm text-gray-500">Total Bookings</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">{monthlyReport.completedBookings}</div>
+              <div className="bg-secondary rounded-lg p-4">
+                <div className="text-2xl font-bold text-brand-black">{monthlyReport.completedBookings}</div>
                 <div className="text-sm text-gray-500">Completed</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">{monthlyReport.utilizationRate}%</div>
+              <div className="bg-secondary rounded-lg p-4">
+                <div className="text-2xl font-bold text-brand-black">{monthlyReport.utilizationRate}%</div>
                 <div className="text-sm text-gray-500">Utilization Rate</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-gray-900">{monthlyReport.uniqueLifters}</div>
+              <div className="bg-secondary rounded-lg p-4">
+                <div className="text-2xl font-bold text-brand-black">{monthlyReport.uniqueLifters}</div>
                 <div className="text-sm text-gray-500">Active Lifters</div>
               </div>
             </div>
