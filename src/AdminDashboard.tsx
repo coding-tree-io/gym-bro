@@ -350,9 +350,13 @@ function AutoFillDayButton({ selectedDateTime }: { selectedDateTime: number }) {
     try {
       const res = await fillDay({ dayStartUtc: selectedDateTime });
       const created = (res as any)?.created ?? 0;
-      toast.success(`Created ${created} slot${created === 1 ? "" : "s"} from default working hours`);
+      toast.success(
+        `Created ${created} slot${created === 1 ? "" : "s"} from default working hours`,
+      );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to fill day");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to fill day",
+      );
     } finally {
       setLoading(false);
     }
@@ -559,7 +563,13 @@ function SlotCard({ slot }: { slot: any }) {
   };
 
   return (
-    <Card>
+    <Card
+      className={
+        slot.status === "closed"
+          ? "bg-brand-red/10 border-brand-red/40 text-brand-black"
+          : undefined
+      }
+    >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
@@ -609,37 +619,10 @@ function SlotCard({ slot }: { slot: any }) {
                       }}
                       title="Cancel booking"
                       aria-label={`Cancel booking for ${b.name}`}
-                      size="icon"
                       variant="ghost"
-                      className="mr-2 text-red-700"
+                      className="mr-2 text-red-700 border border-red-200 hover:bg-red-50 px-2 py-1 rounded"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                      >
-                        <path
-                          d="M15 9 9 15"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M9 9l6 6"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
+                      Cancel
                     </Button>
                     <span>{b.name}</span>
                   </div>
@@ -682,37 +665,10 @@ function SlotCard({ slot }: { slot: any }) {
                       }}
                       title="Cancel booking"
                       aria-label={`Cancel booking for ${b.name}`}
-                      size="icon"
                       variant="ghost"
-                      className="mr-2 text-red-700"
+                      className="mr-2 text-red-700 border border-red-200 hover:bg-red-50 px-2 py-1 rounded"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="h-4 w-4"
-                      >
-                        <path
-                          d="M15 9 9 15"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M9 9l6 6"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="9"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
+                      Cancel
                     </Button>
                     <span>{b.name}</span>
                   </div>
@@ -728,165 +684,48 @@ function SlotCard({ slot }: { slot: any }) {
         </div>
       </CardContent>
 
-      <CardFooter className="justify-end space-x-1">
-        <Button
-          onClick={() => void handleStatusChange("open")}
-          title="Open slot"
-          aria-label="Open slot"
-          size="icon"
-          variant="ghost"
-          className={
-            slot.status === "open"
-              ? "bg-green-100 text-green-700 border border-green-200"
-              : "text-green-700"
-          }
-        >
-          <span className="sr-only">Open</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-4 w-4"
-          >
-            <path
-              d="M9 12.75 11.25 15 15 9.75"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </Button>
-        <Button
-          onClick={() => void handleStatusChange("closed")}
-          title="Close slot"
-          aria-label="Close slot"
-          size="icon"
-          variant="ghost"
-          className={
-            slot.status === "closed"
-              ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
-              : "text-yellow-700"
-          }
-        >
-          <span className="sr-only">Close</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-4 w-4"
-          >
-            <path
-              d="M7 12h10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </Button>
-        <Button
-          onClick={() => void handleStatusChange("canceled")}
-          title="Cancel slot"
-          aria-label="Cancel slot"
-          size="icon"
-          variant="ghost"
-          className={
-            slot.status === "canceled"
-              ? "bg-red-100 text-red-700 border border-red-200"
-              : "text-red-700"
-          }
-        >
-          <span className="sr-only">Cancel</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-4 w-4"
-          >
-            <path
-              d="M15 9 9 15"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M9 9l6 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </Button>
-        <Button
-          onClick={() => void handleDelete()}
-          title="Delete slot"
-          aria-label="Delete slot"
-          size="icon"
-          variant="ghost"
-          className="text-red-700"
-        >
-          <span className="sr-only">Delete</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="h-4 w-4"
-          >
-            <path
-              d="M6 7h12"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M10 11v6M14 11v6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M9 7l1-2h4l1 2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <rect
-              x="5"
-              y="7"
-              width="14"
-              height="12"
-              rx="2"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </Button>
+      <CardFooter className="flex-col gap-2">
+        {slot.status === "open" ? (
+          <>
+            <Button
+              onClick={() => void handleStatusChange("closed")}
+              title="Close slot"
+              aria-label="Close slot"
+              className="w-full bg-brand-black text-white hover:bg-black/90"
+            >
+              Close slot
+            </Button>
+            <Button
+              onClick={() => void handleDelete()}
+              title="Delete slot"
+              aria-label="Delete slot"
+              variant="destructive"
+              className="w-full"
+            >
+              Delete slot
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              onClick={() => void handleStatusChange("open")}
+              title="Open slot"
+              aria-label="Open slot"
+              className="w-full bg-brand-black text-white hover:bg-black/90"
+            >
+              Open slot
+            </Button>
+            <Button
+              onClick={() => void handleDelete()}
+              title="Delete slot"
+              aria-label="Delete slot"
+              variant="destructive"
+              className="w-full"
+            >
+              Delete slot
+            </Button>
+          </>
+        )}
       </CardFooter>
     </Card>
   );
