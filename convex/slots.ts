@@ -451,7 +451,7 @@ export const fillDayWithDefaultWorkingHours = mutation({
     const uniqueSlots = Array.from(uniqueByStart.values()).sort((a, b) => a.startUtc - b.startUtc);
 
     // Insert slots
-    const capacityTotal = 4;
+    const capacityTotal = 5;
     const capacityExp = 3;
     const capacityInexp = 2;
 
