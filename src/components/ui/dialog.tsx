@@ -18,8 +18,15 @@ export type DialogProps = React.PropsWithChildren<{
   onOpenChange?: (open: boolean) => void;
 }>;
 
-export function Dialog({ open: openProp, defaultOpen, onOpenChange, children }: DialogProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = React.useState<boolean>(defaultOpen ?? false);
+export function Dialog({
+  open: openProp,
+  defaultOpen,
+  onOpenChange,
+  children,
+}: DialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState<boolean>(
+    defaultOpen ?? false,
+  );
   const isControlled = openProp !== undefined;
   const open = isControlled ? Boolean(openProp) : uncontrolledOpen;
 
@@ -30,14 +37,21 @@ export function Dialog({ open: openProp, defaultOpen, onOpenChange, children }: 
 
   const value = React.useMemo(() => ({ open, setOpen }), [open]);
 
-  return <DialogContext.Provider value={value}>{children}</DialogContext.Provider>;
+  return (
+    <DialogContext.Provider value={value}>{children}</DialogContext.Provider>
+  );
 }
 
 export type DialogTriggerProps = React.PropsWithChildren<{
   asChild?: boolean;
-}> & React.ButtonHTMLAttributes<HTMLButtonElement>;
+}> &
+  React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function DialogTrigger({ asChild, children, ...props }: DialogTriggerProps) {
+export function DialogTrigger({
+  asChild,
+  children,
+  ...props
+}: DialogTriggerProps) {
   const ctx = React.useContext(DialogContext);
   if (!ctx) return null;
 
@@ -68,7 +82,12 @@ export type DialogContentProps = React.HTMLAttributes<HTMLDivElement> & {
   overlayClassName?: string;
 };
 
-export function DialogContent({ className, overlayClassName, children, ...props }: DialogContentProps) {
+export function DialogContent({
+  className,
+  overlayClassName,
+  children,
+  ...props
+}: DialogContentProps) {
   const ctx = React.useContext(DialogContext);
   if (!ctx || !ctx.open) return null;
 
@@ -80,7 +99,7 @@ export function DialogContent({ className, overlayClassName, children, ...props 
     <div
       className={cn(
         "fixed inset-0 z-50 flex items-center justify-center",
-        overlayClassName
+        overlayClassName,
       )}
       onMouseDown={onBackdropClick}
     >
@@ -88,7 +107,7 @@ export function DialogContent({ className, overlayClassName, children, ...props 
       <div
         className={cn(
           "relative z-10 w-full max-w-lg rounded-lg border bg-white p-6 shadow-lg",
-          className
+          className,
         )}
         role="dialog"
         aria-modal="true"
@@ -100,25 +119,43 @@ export function DialogContent({ className, overlayClassName, children, ...props 
   );
 }
 
-export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function DialogHeader({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("mb-4", className)} {...props} />;
 }
 
-export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+export function DialogTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h3 className={cn("text-xl font-semibold", className)} {...props} />;
 }
 
-export function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function DialogDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("text-sm text-gray-500", className)} {...props} />;
 }
 
-export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mt-6 flex items-center justify-end gap-3", className)} {...props} />;
+export function DialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("mt-6 flex items-center justify-end gap-3", className)}
+      {...props}
+    />
+  );
 }
 
 export type DialogCloseProps = React.PropsWithChildren<{
   asChild?: boolean;
-}> & React.ButtonHTMLAttributes<HTMLButtonElement>;
+}> &
+  React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 export function DialogClose({ asChild, children, ...props }: DialogCloseProps) {
   const ctx = React.useContext(DialogContext);

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getSlots = query({
@@ -8,45 +8,81 @@ export const getSlots = query({
     to: v.number(),
   },
   handler: async (ctx, args) => {
+    // Determine caller role to gate PII
+    const userId = await getAuthUserId(ctx);
+    let isAdmin = false;
+    if (userId) {
+      const userProfile = await ctx.db
+        .query("userProfiles")
+        .withIndex("by_user_id", (q) => q.eq("userId", userId))
+        .unique();
+      isAdmin = !!userProfile && userProfile.role === "admin";
+    }
+
     const slots = await ctx.db
       .query("slots")
-      .withIndex("by_starts_at", (q) => 
-        q.gte("startsAtUtc", args.from).lt("startsAtUtc", args.to)
+      .withIndex("by_starts_at", (q) =>
+        q.gte("startsAtUtc", args.from).lt("startsAtUtc", args.to),
       )
       .collect();
 
-    // For all slots in range, load bookings then batch-resolve lifters per slot
-    const slotsWithAvailability = await Promise.all(
+    // For all slots in range, load bookings then (if admin) batch-resolve lifters per slot
+    return await Promise.all(
       slots.map(async (slot) => {
         const bookings = await ctx.db
           .query("bookings")
           .withIndex("by_slot_and_status", (q) =>
-            q.eq("slotId", slot._id).eq("status", "booked")
+            q.eq("slotId", slot._id).eq("status", "booked"),
           )
           .collect();
 
-        const expBookings = bookings.filter((b) => b.level === "experienced").length;
-        const inexpBookings = bookings.filter((b) => b.level === "inexperienced").length;
+        const expBookings = bookings.filter(
+          (b) => b.level === "experienced",
+        ).length;
+        const inexpBookings = bookings.filter(
+          (b) => b.level === "inexperienced",
+        ).length;
 
-        // Batch lifter resolutions to avoid N+1 get() calls
-        const uniqueLifterIds = Array.from(new Set(bookings.map((b) => b.lifterId)));
-        const lifterDocs = await Promise.all(uniqueLifterIds.map((id) => ctx.db.get(id)));
-        const lifterMap = new Map(uniqueLifterIds.map((id, i) => [id, lifterDocs[i]]));
+        let expBookedNames: string[] = [];
+        let inexpBookedNames: string[] = [];
+        let expBookingsList: any[] = [];
+        let inexpBookingsList: any[] = [];
 
-        const lifterEntries = bookings.map((b) => {
-          const authUser = lifterMap.get(b.lifterId);
-          return {
-            bookingId: b._id,
-            lifterId: b.lifterId,
-            level: b.level,
-            name: (authUser as any)?.name || "Unknown",
-          };
-        });
+        if (isAdmin) {
+          // Batch lifter resolutions to avoid N+1 get() calls
+          const uniqueLifterIds = Array.from(
+            new Set(bookings.map((b) => b.lifterId)),
+          );
+          const lifterDocs = await Promise.all(
+            uniqueLifterIds.map((id) => ctx.db.get(id)),
+          );
+          const lifterMap = new Map(
+            uniqueLifterIds.map((id, i) => [id, lifterDocs[i]]),
+          );
 
-        const expNames = lifterEntries.filter((x) => x.level === "experienced").map((x) => x.name);
-        const inexpNames = lifterEntries.filter((x) => x.level === "inexperienced").map((x) => x.name);
-        const expBookingsList = lifterEntries.filter((x) => x.level === "experienced");
-        const inexpBookingsList = lifterEntries.filter((x) => x.level === "inexperienced");
+          const lifterEntries = bookings.map((b) => {
+            const authUser = lifterMap.get(b.lifterId);
+            return {
+              bookingId: b._id,
+              lifterId: b.lifterId,
+              level: b.level,
+              name: (authUser as any)?.name || "Unknown",
+            };
+          });
+
+          expBookedNames = lifterEntries
+            .filter((x) => x.level === "experienced")
+            .map((x) => x.name);
+          inexpBookedNames = lifterEntries
+            .filter((x) => x.level === "inexperienced")
+            .map((x) => x.name);
+          expBookingsList = lifterEntries.filter(
+            (x) => x.level === "experienced",
+          );
+          inexpBookingsList = lifterEntries.filter(
+            (x) => x.level === "inexperienced",
+          );
+        }
 
         return {
           ...slot,
@@ -56,15 +92,13 @@ export const getSlots = query({
           availableInexp: slot.capacityInexp - inexpBookings,
           totalBooked: expBookings + inexpBookings,
           totalAvailable: slot.capacityTotal - (expBookings + inexpBookings),
-          expBookedNames: expNames,
-          inexpBookedNames: inexpNames,
+          expBookedNames,
+          inexpBookedNames,
           expBookingsList,
           inexpBookingsList,
         };
-      })
+      }),
     );
-
-    return slotsWithAvailability;
   },
 });
 
@@ -79,7 +113,7 @@ export const createSlot = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    
+
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
@@ -103,7 +137,7 @@ export const createSlot = mutation({
       .query("policies")
       .withIndex("by_key", (q) => q.eq("key", "gymTimezone"))
       .unique();
-    
+
     const tz = tzPolicy?.value || "America/New_York";
 
     const slotId = await ctx.db.insert("slots", {
@@ -139,12 +173,14 @@ export const updateSlot = mutation({
     capacityTotal: v.optional(v.number()),
     capacityExp: v.optional(v.number()),
     capacityInexp: v.optional(v.number()),
-    status: v.optional(v.union(v.literal("open"), v.literal("closed"), v.literal("canceled"))),
+    status: v.optional(
+      v.union(v.literal("open"), v.literal("closed"), v.literal("canceled")),
+    ),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    
+
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
@@ -158,16 +194,24 @@ export const updateSlot = mutation({
     if (!slot) throw new Error("Slot not found");
 
     // If updating capacities, validate against current bookings
-    if (args.capacityTotal !== undefined || args.capacityExp !== undefined || args.capacityInexp !== undefined) {
+    if (
+      args.capacityTotal !== undefined ||
+      args.capacityExp !== undefined ||
+      args.capacityInexp !== undefined
+    ) {
       const bookings = await ctx.db
         .query("bookings")
-        .withIndex("by_slot_and_status", (q) => 
-          q.eq("slotId", args.slotId).eq("status", "booked")
+        .withIndex("by_slot_and_status", (q) =>
+          q.eq("slotId", args.slotId).eq("status", "booked"),
         )
         .collect();
 
-      const expBookings = bookings.filter(b => b.level === "experienced").length;
-      const inexpBookings = bookings.filter(b => b.level === "inexperienced").length;
+      const expBookings = bookings.filter(
+        (b) => b.level === "experienced",
+      ).length;
+      const inexpBookings = bookings.filter(
+        (b) => b.level === "inexperienced",
+      ).length;
 
       const newCapacityExp = args.capacityExp ?? slot.capacityExp;
       const newCapacityInexp = args.capacityInexp ?? slot.capacityInexp;
@@ -178,14 +222,18 @@ export const updateSlot = mutation({
       }
 
       if (expBookings > newCapacityExp || inexpBookings > newCapacityInexp) {
-        throw new Error(`Cannot reduce capacity below current bookings (${expBookings} exp, ${inexpBookings} inexp)`);
+        throw new Error(
+          `Cannot reduce capacity below current bookings (${expBookings} exp, ${inexpBookings} inexp)`,
+        );
       }
     }
 
     const updates: any = { updatedAt: Date.now() };
-    if (args.capacityTotal !== undefined) updates.capacityTotal = args.capacityTotal;
+    if (args.capacityTotal !== undefined)
+      updates.capacityTotal = args.capacityTotal;
     if (args.capacityExp !== undefined) updates.capacityExp = args.capacityExp;
-    if (args.capacityInexp !== undefined) updates.capacityInexp = args.capacityInexp;
+    if (args.capacityInexp !== undefined)
+      updates.capacityInexp = args.capacityInexp;
     if (args.status !== undefined) updates.status = args.status;
 
     await ctx.db.patch(args.slotId, updates);
@@ -207,7 +255,7 @@ export const deleteSlot = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
-    
+
     const userProfile = await ctx.db
       .query("userProfiles")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
@@ -220,8 +268,8 @@ export const deleteSlot = mutation({
     // Cancel all bookings for this slot
     const bookings = await ctx.db
       .query("bookings")
-      .withIndex("by_slot_and_status", (q) => 
-        q.eq("slotId", args.slotId).eq("status", "booked")
+      .withIndex("by_slot_and_status", (q) =>
+        q.eq("slotId", args.slotId).eq("status", "booked"),
       )
       .collect();
 
@@ -235,7 +283,9 @@ export const deleteSlot = mutation({
       });
 
       // Refund quota against the slot's weekly window
-      const slotWeekStart = deletedSlot ? getWeekStart(deletedSlot.startsAtUtc) : getWeekStart(booking.createdAt);
+      const slotWeekStart = deletedSlot
+        ? getWeekStart(deletedSlot.startsAtUtc)
+        : getWeekStart(booking.createdAt);
       await refundQuota(ctx, booking.lifterId, slotWeekStart);
     }
 
@@ -266,7 +316,7 @@ async function refundQuota(ctx: any, lifterId: any, weekStartTs: number) {
   const quotaWindow = await ctx.db
     .query("quotaWindows")
     .withIndex("by_lifter_and_week", (q: any) =>
-      q.eq("lifterId", lifterId).eq("weekStartUtc", weekStart)
+      q.eq("lifterId", lifterId).eq("weekStartUtc", weekStart),
     )
     .unique();
 
@@ -285,7 +335,6 @@ function getWeekStart(timestamp: number): number {
   monday.setUTCHours(0, 0, 0, 0);
   return monday.getTime();
 }
-
 
 export const fillDayWithDefaultWorkingHours = mutation({
   args: {
@@ -311,11 +360,15 @@ export const fillDayWithDefaultWorkingHours = mutation({
     // Ensure day is empty or we skip existing overlaps
     const existing = await ctx.db
       .query("slots")
-      .withIndex("by_starts_at", (q) => q.gte("startsAtUtc", dayStart).lt("startsAtUtc", dayEnd))
+      .withIndex("by_starts_at", (q) =>
+        q.gte("startsAtUtc", dayStart).lt("startsAtUtc", dayEnd),
+      )
       .collect();
 
     if (existing.length > 0) {
-      throw new Error("Day already has slots; only empty days can be auto-filled");
+      throw new Error(
+        "Day already has slots; only empty days can be auto-filled",
+      );
     }
 
     // Load policies
@@ -338,7 +391,8 @@ export const fillDayWithDefaultWorkingHours = mutation({
       if (!m) return null;
       const h = parseInt(m[1], 10);
       const min = parseInt(m[2], 10);
-      if (isNaN(h) || isNaN(min) || h < 0 || h > 23 || min < 0 || min > 59) return null;
+      if (isNaN(h) || isNaN(min) || h < 0 || h > 23 || min < 0 || min > 59)
+        return null;
       return { h, min } as const;
     };
 
@@ -355,18 +409,10 @@ export const fillDayWithDefaultWorkingHours = mutation({
         hour12: false,
       });
       const parts = dtf.formatToParts(new Date(dayStart));
-      const get = (type: string) => parts.find(p => p.type === type)?.value;
+      const get = (type: string) => parts.find((p) => p.type === type)?.value;
       const year = Number(get("year"));
       const month = Number(get("month"));
       const day = Number(get("day"));
-
-      // Construct an ISO-like string as local time in tz and let Date parse as if local; then fix using timeZone offset
-      // But Date lacks tz; instead compute UTC via formatting trick: get the offset by formatting this local wall time in tz.
-      const localIso = `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day
-        .toString()
-        .padStart(2, "0")}T${h.toString().padStart(2, "0")}:${min
-        .toString()
-        .padStart(2, "0")}:00`;
 
       // Use Date to get a timestamp for this string as if it's in UTC then adjust by tz offset.
       // To accurately compute, determine what UTC time displays as this local wall time in tz by binary search over offsets.
@@ -392,15 +438,20 @@ export const fillDayWithDefaultWorkingHours = mutation({
         minute: "2-digit",
         hour12: false,
       }).formatToParts(new Date(guess));
-      const obsYear = Number(fmtParts.find(p => p.type === "year")?.value);
-      const obsMonth = Number(fmtParts.find(p => p.type === "month")?.value);
-      const obsDay = Number(fmtParts.find(p => p.type === "day")?.value);
-      const obsHour = Number(fmtParts.find(p => p.type === "hour")?.value);
-      const obsMinute = Number(fmtParts.find(p => p.type === "minute")?.value);
+      const obsYear = Number(fmtParts.find((p) => p.type === "year")?.value);
+      const obsMonth = Number(fmtParts.find((p) => p.type === "month")?.value);
+      const obsDay = Number(fmtParts.find((p) => p.type === "day")?.value);
+      const obsHour = Number(fmtParts.find((p) => p.type === "hour")?.value);
+      const obsMinute = Number(
+        fmtParts.find((p) => p.type === "minute")?.value,
+      );
 
       // Compute difference in minutes between desired local and observed local
-      const desiredMinutes = (((year*12 + (month)) * 31 + day) * 24 + h) * 60 + min; // linearization only for diff
-      const observedMinutes = (((obsYear*12 + (obsMonth)) * 31 + obsDay) * 24 + obsHour) * 60 + obsMinute;
+      const desiredMinutes =
+        (((year * 12 + month) * 31 + day) * 24 + h) * 60 + min; // linearization only for diff
+      const observedMinutes =
+        (((obsYear * 12 + obsMonth) * 31 + obsDay) * 24 + obsHour) * 60 +
+        obsMinute;
       const diffMinutes = desiredMinutes - observedMinutes;
       guess += diffMinutes * 60 * 1000;
 
@@ -444,11 +495,17 @@ export const fillDayWithDefaultWorkingHours = mutation({
     }
 
     // Deduplicate in case of overlapping ranges (by start time)
-    const uniqueByStart = new Map<number, { startUtc: number; endUtc: number }>();
+    const uniqueByStart = new Map<
+      number,
+      { startUtc: number; endUtc: number }
+    >();
     for (const def of slotDefs) {
-      if (!uniqueByStart.has(def.startUtc)) uniqueByStart.set(def.startUtc, def);
+      if (!uniqueByStart.has(def.startUtc))
+        uniqueByStart.set(def.startUtc, def);
     }
-    const uniqueSlots = Array.from(uniqueByStart.values()).sort((a, b) => a.startUtc - b.startUtc);
+    const uniqueSlots = Array.from(uniqueByStart.values()).sort(
+      (a, b) => a.startUtc - b.startUtc,
+    );
 
     // Insert slots
     const capacityTotal = 5;

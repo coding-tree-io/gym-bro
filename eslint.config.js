@@ -3,6 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import nextPlugin from "@next/eslint-plugin-next";
 
 export default tseslint.config(
   {
@@ -13,7 +14,6 @@ export default tseslint.config(
       "postcss.config.js",
       "tailwind.config.js",
       "vite.config.ts",
-      "src",
     ],
   },
   {
@@ -30,16 +30,20 @@ export default tseslint.config(
       },
       parserOptions: {
         project: [
-          "./tsconfig.json"
+          "./tsconfig.json",
+          "./tsconfig.app.json"
         ],
       },
     },
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      "@next/next": nextPlugin,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // Enable at least one Next.js rule so the plugin is definitely active
+      "@next/next/no-html-link-for-pages": "warn",
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
