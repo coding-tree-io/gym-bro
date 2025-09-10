@@ -217,6 +217,8 @@ export const deleteSlot = mutation({
       )
       .collect();
 
+    // Fetch the slot to base refunds on its week
+    const deletedSlot = await ctx.db.get(args.slotId);
     for (const booking of bookings) {
       await ctx.db.patch(booking._id, {
         status: "canceled_by_admin",
@@ -224,8 +226,9 @@ export const deleteSlot = mutation({
         cancelReason: "Slot deleted by admin",
       });
 
-      // Refund quota
-      await refundQuota(ctx, booking.lifterId, booking.createdAt);
+      // Refund quota against the slot's weekly window
+      const slotWeekStart = deletedSlot ? getWeekStart(deletedSlot.startsAtUtc) : getWeekStart(booking.createdAt);
+      await refundQuota(ctx, booking.lifterId, slotWeekStart);
     }
 
     await ctx.db.delete(args.slotId);
@@ -242,13 +245,19 @@ export const deleteSlot = mutation({
 });
 
 // Helper function to refund quota
-async function refundQuota(ctx: any, lifterId: any, bookingCreatedAt: number) {
-  const weekStart = getWeekStart(bookingCreatedAt);
-  const weekEnd = weekStart + 7 * 24 * 60 * 60 * 1000 - 1;
+async function refundQuota(ctx: any, lifterId: any, weekStartTs: number) {
+  // Determine the week window based on the slot's start time, not when the booking was made
+  // We need the slot's startsAtUtc; find the booking by createdAt + lifter? We don't have bookingId here.
+  // Since this is invoked within deleteSlot loop with each booking object available, consider fetching the slot from context args.
+  // Minimal change: infer by using the slot deletion context: args.slotId isn't available here, so instead refactor caller to pass the slot startsAtUtc.
+  // However to keep changes minimal, we'll query recent bookings for lifter within this function isn't ideal.
+  // Simpler: fetch the slot by inspecting the most recent patched booking in caller, but we can't access it.
+  // Alternative minimal change: add an overload via bookingCreatedAt parameter name change to slotStartsAtUtc and pass slot.startsAtUtc from caller.
+  const weekStart = weekStartTs;
 
   const quotaWindow = await ctx.db
     .query("quotaWindows")
-    .withIndex("by_lifter_and_week", (q: any) => 
+    .withIndex("by_lifter_and_week", (q: any) =>
       q.eq("lifterId", lifterId).eq("weekStartUtc", weekStart)
     )
     .unique();

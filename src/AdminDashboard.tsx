@@ -294,7 +294,7 @@ function SlotsTab() {
               return (
                 <div className="text-center py-4 space-y-3">
                   <p className="text-gray-500">No slots</p>
-                  <AutoFillDayButton selectedDateTime={selectedDateTime} />
+                  <AutoFillDayButton selectedDateTime={bounds ? bounds.from : new Date(selectedDate).getTime()} />
                 </div>
               );
             return (

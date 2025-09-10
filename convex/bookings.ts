@@ -84,26 +84,40 @@ export const bookSlot = mutation({
       }
     }
 
-    // Check weekly quota
-    const weekStart = getWeekStart(Date.now());
+    // Check weekly quota based on the slot's start time, not the current time
+    const weekStart = getWeekStart(slot.startsAtUtc);
     const weekEnd = weekStart + 7 * 24 * 60 * 60 * 1000 - 1;
 
     let quotaWindow = await ctx.db
       .query("quotaWindows")
-      .withIndex("by_lifter_and_week", (q) => 
+      .withIndex("by_lifter_and_week", (q) =>
         q.eq("lifterId", userId).eq("weekStartUtc", weekStart)
       )
       .unique();
 
     if (!quotaWindow) {
+      // Determine quota: use user's explicit weeklyQuota if defined; otherwise fallback to policy defaults
+      let resolvedQuota: number | undefined = userProfile.weeklyQuota;
+      if (resolvedQuota === undefined) {
+        const policyKey = userProfile.experienceLevel === "experienced"
+          ? "defaultWeeklyQuotaExperienced"
+          : "defaultWeeklyQuotaInexperienced";
+        const policy = await ctx.db
+          .query("policies")
+          .withIndex("by_key", (q) => q.eq("key", policyKey))
+          .unique();
+        const parsed = policy ? parseInt(policy.value) : NaN;
+        resolvedQuota = Number.isFinite(parsed) ? parsed : 0;
+      }
+
       const quotaWindowId = await ctx.db.insert("quotaWindows", {
         lifterId: userId,
         weekStartUtc: weekStart,
         weekEndUtc: weekEnd,
-        quota: userProfile.weeklyQuota || 0,
+        quota: resolvedQuota ?? 0,
         used: 0,
       });
-      
+
       quotaWindow = await ctx.db.get(quotaWindowId);
       if (!quotaWindow) throw new Error("Failed to create quota window");
     }
@@ -231,10 +245,12 @@ export const cancelBooking = mutation({
 
     // Refund quota only if canceled by lifter within cutoff or by admin
     if (isWithinCutoff || !isLifterCancel) {
-      const weekStart = getWeekStart(booking.createdAt);
+      // Refund against the same weekly window used when booking: based on the slot's start week
+      const refundSlot = slot; // already fetched above
+      const weekStart = getWeekStart(refundSlot.startsAtUtc);
       const quotaWindow = await ctx.db
         .query("quotaWindows")
-        .withIndex("by_lifter_and_week", (q) => 
+        .withIndex("by_lifter_and_week", (q) =>
           q.eq("lifterId", booking.lifterId).eq("weekStartUtc", weekStart)
         )
         .unique();
