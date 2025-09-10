@@ -15,30 +15,38 @@ export const getSlots = query({
       )
       .collect();
 
-    // Get booking counts for each slot
+    // For all slots in range, load bookings then batch-resolve lifters per slot
     const slotsWithAvailability = await Promise.all(
       slots.map(async (slot) => {
         const bookings = await ctx.db
           .query("bookings")
-          .withIndex("by_slot_and_status", (q) => 
+          .withIndex("by_slot_and_status", (q) =>
             q.eq("slotId", slot._id).eq("status", "booked")
           )
           .collect();
 
-        const expBookings = bookings.filter(b => b.level === "experienced").length;
-        const inexpBookings = bookings.filter(b => b.level === "inexperienced").length;
+        const expBookings = bookings.filter((b) => b.level === "experienced").length;
+        const inexpBookings = bookings.filter((b) => b.level === "inexperienced").length;
 
-        // Resolve lifter names for booked users
-        const lifterEntries = await Promise.all(
-          bookings.map(async (b) => {
-            const authUser = await ctx.db.get(b.lifterId);
-            return { bookingId: b._id, lifterId: b.lifterId, level: b.level, name: authUser?.name || "Unknown" };
-          })
-        );
-        const expNames = lifterEntries.filter(x => x.level === "experienced").map(x => x.name);
-        const inexpNames = lifterEntries.filter(x => x.level === "inexperienced").map(x => x.name);
-        const expBookingsList = lifterEntries.filter(x => x.level === "experienced");
-        const inexpBookingsList = lifterEntries.filter(x => x.level === "inexperienced");
+        // Batch lifter resolutions to avoid N+1 get() calls
+        const uniqueLifterIds = Array.from(new Set(bookings.map((b) => b.lifterId)));
+        const lifterDocs = await Promise.all(uniqueLifterIds.map((id) => ctx.db.get(id)));
+        const lifterMap = new Map(uniqueLifterIds.map((id, i) => [id, lifterDocs[i]]));
+
+        const lifterEntries = bookings.map((b) => {
+          const authUser = lifterMap.get(b.lifterId);
+          return {
+            bookingId: b._id,
+            lifterId: b.lifterId,
+            level: b.level,
+            name: (authUser as any)?.name || "Unknown",
+          };
+        });
+
+        const expNames = lifterEntries.filter((x) => x.level === "experienced").map((x) => x.name);
+        const inexpNames = lifterEntries.filter((x) => x.level === "inexperienced").map((x) => x.name);
+        const expBookingsList = lifterEntries.filter((x) => x.level === "experienced");
+        const inexpBookingsList = lifterEntries.filter((x) => x.level === "inexperienced");
 
         return {
           ...slot,
