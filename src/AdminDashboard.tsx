@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { gymDayBoundsUtc, localDateTimeToUtc } from "@/utils/time";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { toast } from "sonner";
@@ -244,12 +245,14 @@ function SlotsTab() {
 
   const [openCreate, setOpenCreate] = useState(false);
 
-  const selectedDateTime = new Date(selectedDate).getTime();
-  const nextDay = selectedDateTime + 24 * 60 * 60 * 1000;
-  const slots = useQuery(api.slots.getSlots, {
-    from: selectedDateTime,
-    to: nextDay,
-  });
+  const tzPolicy = useQuery(api.policies.getPolicy, { key: "gymTimezone" });
+  const tz = tzPolicy?.value || "America/New_York";
+
+  const bounds = tz ? gymDayBoundsUtc(selectedDate, tz) : null;
+  const slots = useQuery(api.slots.getSlots, bounds ? {
+    from: bounds.from,
+    to: bounds.to,
+  } : undefined);
 
   return (
     <div className="space-y-6">
@@ -385,17 +388,15 @@ function CreateSlotForm({
   });
 
   const createSlot = useMutation(api.slots.createSlot);
+  const tzPolicy = useQuery(api.policies.getPolicy, { key: "gymTimezone" });
+  const tz = tzPolicy?.value || "America/New_York";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const startDateTime = new Date(
-        `${selectedDate}T${formData.startTime}`,
-      ).getTime();
-      const endDateTime = new Date(
-        `${selectedDate}T${formData.endTime}`,
-      ).getTime();
+      const startDateTime = localDateTimeToUtc(selectedDate, formData.startTime, tz);
+      const endDateTime = localDateTimeToUtc(selectedDate, formData.endTime, tz);
 
       await createSlot({
         startsAtUtc: startDateTime,
