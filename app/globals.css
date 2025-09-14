@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-light: #ffffff;
-  --color-dark: #171717;
+@layer base {
+  :root {
+    --color-light: #ffffff;
+    --color-dark: #171717;
+  }
 }
 
 .accent-text {
