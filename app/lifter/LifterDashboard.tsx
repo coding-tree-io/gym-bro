@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -133,9 +134,7 @@ export function LifterDashboard() {
             ].map((tab) => (
               <NavigationMenuItem key={tab.key}>
                 <NavigationMenuLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onClick={() => {
                     setActiveTab(tab.key as any);
                   }}
                   className={`px-3 py-4 border-b-2 font-medium text-sm ${

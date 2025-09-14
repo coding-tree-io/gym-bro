@@ -32,13 +32,14 @@ NavigationMenuItem.displayName = "NavigationMenuItem"
 
 
 const NavigationMenuLink = React.forwardRef<
-  HTMLAnchorElement,
-  React.AnchorHTMLAttributes<HTMLAnchorElement>
->(({ className, ...props }, ref) => (
-  <a
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, type = "button", ...props }, ref) => (
+  <button
     ref={ref}
+    type={type}
     className={cn(
-      "block select-none rounded-md p-2 text-sm font-medium leading-none no-underline outline-none transition-colors hover:bg-brand-cream focus:bg-brand-cream",
+      "block select-none rounded-md p-2 text-sm font-medium leading-none outline-none transition-colors hover:bg-brand-cream focus:bg-brand-cream",
       className
     )}
     {...props}

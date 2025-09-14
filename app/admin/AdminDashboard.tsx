@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { gymDayBoundsUtc, localDateTimeToUtc } from "@/utils/time";
 import { useQuery, useMutation } from "convex/react";
@@ -87,9 +88,7 @@ function NavMenuAdmin({
           {tabs.map((tab) => (
             <NavigationMenuItem key={tab.key}>
               <NavigationMenuLink
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={() => {
                   setActiveTab(tab.key);
                 }}
                 className={
