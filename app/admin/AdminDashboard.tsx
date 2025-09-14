@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { gymDayBoundsUtc, localDateTimeToUtc } from "@/utils/time";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import { Id } from "../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataModel";
 import {
   Card,
   CardHeader,
@@ -249,10 +249,15 @@ function SlotsTab() {
   const tz = tzPolicy?.value || "America/New_York";
 
   const bounds = tz ? gymDayBoundsUtc(selectedDate, tz) : null;
-  const slots = useQuery(api.slots.getSlots, bounds ? {
-    from: bounds.from,
-    to: bounds.to,
-  } : undefined);
+  const slots = useQuery(
+    api.slots.getSlots,
+    bounds
+      ? {
+          from: bounds.from,
+          to: bounds.to,
+        }
+      : undefined,
+  );
 
   return (
     <div className="space-y-6">
@@ -294,7 +299,11 @@ function SlotsTab() {
               return (
                 <div className="text-center py-4 space-y-3">
                   <p className="text-gray-500">No slots</p>
-                  <AutoFillDayButton selectedDateTime={bounds ? bounds.from : new Date(selectedDate).getTime()} />
+                  <AutoFillDayButton
+                    selectedDateTime={
+                      bounds ? bounds.from : new Date(selectedDate).getTime()
+                    }
+                  />
                 </div>
               );
             return (
@@ -395,8 +404,16 @@ function CreateSlotForm({
     e.preventDefault();
 
     try {
-      const startDateTime = localDateTimeToUtc(selectedDate, formData.startTime, tz);
-      const endDateTime = localDateTimeToUtc(selectedDate, formData.endTime, tz);
+      const startDateTime = localDateTimeToUtc(
+        selectedDate,
+        formData.startTime,
+        tz,
+      );
+      const endDateTime = localDateTimeToUtc(
+        selectedDate,
+        formData.endTime,
+        tz,
+      );
 
       await createSlot({
         startsAtUtc: startDateTime,
@@ -692,7 +709,7 @@ function SlotCard({ slot }: { slot: any }) {
               onClick={() => void handleStatusChange("closed")}
               title="Close slot"
               aria-label="Close slot"
-              className="w-full bg-brand-black text-white hover:bg-black/90"
+              className="w-full bg-brand-black text-white hover:bg:black/90"
             >
               Close slot
             </Button>
@@ -712,7 +729,7 @@ function SlotCard({ slot }: { slot: any }) {
               onClick={() => void handleStatusChange("open")}
               title="Open slot"
               aria-label="Open slot"
-              className="w-full bg-brand-black text-white hover:bg-black/90"
+              className="w-full bg-brand-black text-white hover:bg:black/90"
             >
               Open slot
             </Button>

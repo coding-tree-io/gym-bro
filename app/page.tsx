@@ -5,9 +5,9 @@ import { api } from "../convex/_generated/api";
 import { SignInForm } from "@/SignInForm";
 import { SignOutButton } from "@/SignOutButton";
 import { Toaster } from "sonner";
-import { LifterDashboard } from "@/LifterDashboard";
-import { AdminDashboard } from "@/AdminDashboard";
-import { UserSetup } from "@/UserSetup";
+import { LifterDashboard } from "@/lifter/LifterDashboard";
+import { AdminDashboard } from "@/admin/AdminDashboard";
+import { UserSetup } from "@/usersetup/UserSetup";
 
 export default function Page() {
   const currentUser = useQuery(api.users.getCurrentUser);
@@ -25,8 +25,14 @@ export default function Page() {
           <Unauthenticated>
             <div className="max-w-md mx-auto mt-16">
               <div className="text-center mb-8">
-                <img src="/logo.png" alt="Savage Barbell" className="h-24 w-auto mx-auto mb-4" />
-                <p className="text-xl text-gray-600">Professional gym session booking with quota management</p>
+                <img
+                  src="/logo.png"
+                  alt="Savage Barbell"
+                  className="h-24 w-auto mx-auto mb-4"
+                />
+                <p className="text-xl text-gray-600">
+                  Professional gym session booking with quota management
+                </p>
               </div>
               <SignInForm />
             </div>

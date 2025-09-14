@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./app/*", "./src/*"]
+      "@/*": ["./app/*"]
     },
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -31,7 +31,6 @@
   "exclude": [
     "node_modules",
     "src",
-    "vite.config.ts",
     "index.html"
   ]
 }

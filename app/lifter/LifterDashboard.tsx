@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { toast } from "sonner";
-import { Id } from "../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataModel";
 import {
   Carousel,
   CarouselContent,
@@ -40,12 +40,26 @@ function MobileNavLifter({
         onClick={() => setOpen((v) => !v)}
         className="p-2 rounded-md border border-gray-200 hover:bg-gray-50"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
       {open && (
-        <div id="lifter-nav" className="absolute right-0 mt-2 w-56 rounded-md border bg-white shadow z-20">
+        <div
+          id="lifter-nav"
+          className="absolute right-0 mt-2 w-56 rounded-md border bg-white shadow z-20"
+        >
           <nav className="py-1">
             {tabs.map((tab) => (
               <button
@@ -98,9 +112,7 @@ export function LifterDashboard() {
         <h1 className="text-3xl font-bold text-brand-black">
           Welcome, {currentUser?.name}!
         </h1>
-        <p className="text-brand-gray mt-1">
-          Lifter
-        </p>
+        <p className="text-brand-gray mt-1">Lifter</p>
       </div>
 
       {/* Navigation */}
@@ -238,7 +250,9 @@ function CalendarTab({ selectedDate, setSelectedDate, slots, bookings }: any) {
   const bookSlot = useMutation(api.bookings.bookSlot);
   const cancelBooking = useMutation(api.bookings.cancelBooking);
   const currentUser = useQuery(api.users.getCurrentUser);
-  const cutoffPolicy = useQuery(api.policies.getPolicy, { key: "cancellationCutoffHours" });
+  const cutoffPolicy = useQuery(api.policies.getPolicy, {
+    key: "cancellationCutoffHours",
+  });
   const cutoffHours = cutoffPolicy ? parseInt(cutoffPolicy.value) || 24 : 24;
 
   const handleBookSlot = async (slotId: Id<"slots">) => {
@@ -311,7 +325,8 @@ function CalendarTab({ selectedDate, setSelectedDate, slots, bookings }: any) {
                 <div className="flex-1">
                   <div className="font-medium flex items-center gap-2">
                     <span>
-                      {formatTime(slot.startsAtUtc)} - {formatTime(slot.endsAtUtc)}
+                      {formatTime(slot.startsAtUtc)} -{" "}
+                      {formatTime(slot.endsAtUtc)}
                     </span>
                     {isBooked && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-brand-gold text-brand-black">
@@ -321,7 +336,8 @@ function CalendarTab({ selectedDate, setSelectedDate, slots, bookings }: any) {
                   </div>
                   <div className="mt-2 flex flex-col space-y-1 text-xs">
                     <span className="text-brand-gold">
-                      Spots available: {slot.availableExp + slot.availableInexp}/{slot.capacityTotal}
+                      Spots available: {slot.availableExp + slot.availableInexp}
+                      /{slot.capacityTotal}
                     </span>
                   </div>
                 </div>
